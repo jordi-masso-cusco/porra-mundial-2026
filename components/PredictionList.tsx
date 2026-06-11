@@ -41,6 +41,15 @@ function Flag({ team }: { team: string }) {
     return <img src={url} alt="" className="flag" />;
 }
 
+function isExceptionMatchLocked(match: Match) {
+    const exceptionMatchIds = [1, 2];
+
+    return (
+        exceptionMatchIds.includes(match.id) &&
+        new Date() >= new Date(match.kickoff)
+    );
+}
+
 export function PredictionList({
     matches,
     predictions,
@@ -75,6 +84,7 @@ export function PredictionList({
                     <div className="matches-grid">
                         {groupMatches.map((match) => {
                             const prediction = predictions[match.id];
+                            const matchLocked = predictionsClosed || isExceptionMatchLocked(match);
 
                             return (
                                 <div key={match.id} className="card">
@@ -89,7 +99,7 @@ export function PredictionList({
                                                 className="score-input"
                                                 type="number"
                                                 min="0"
-                                                disabled={predictionsClosed}
+                                                disabled={matchLocked}
                                                 value={prediction?.predicted_home ?? ""}
                                                 onChange={(e) =>
                                                     onPredictionChange(
@@ -128,6 +138,11 @@ export function PredictionList({
                                         <span>{formatKickoff(match.kickoff)}</span>
 
                                     </div>
+                                    {matchLocked && (
+                                        <div className="muted" style={{ marginTop: "8px" }}>
+                                            Pronòstic tancat
+                                        </div>
+                                    )}
                                 </div>
                             );
                         })}

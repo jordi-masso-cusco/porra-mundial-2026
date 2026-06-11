@@ -464,10 +464,22 @@ export default function Home() {
       return;
     }
 
-    const completedPredictions = Object.values(predictions).filter(
-      (prediction) =>
-        prediction.predicted_home !== null && prediction.predicted_away !== null
-    );
+    const completedPredictions = Object.values(predictions).filter((prediction) => {
+      const match = matches.find((item) => item.id === prediction.match_id);
+
+      if (!match) return false;
+
+      const exceptionMatchIds = [1, 2];
+      const exceptionMatchLocked =
+        exceptionMatchIds.includes(match.id) &&
+        new Date() >= new Date(match.kickoff);
+
+      return (
+        !exceptionMatchLocked &&
+        prediction.predicted_home !== null &&
+        prediction.predicted_away !== null
+      );
+    });
 
     if (completedPredictions.length === 0) {
       setError("No hi ha cap pronòstic complet per desar.");

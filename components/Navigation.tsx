@@ -15,9 +15,9 @@ const tabs: {
 }[] = [
         { key: "mine", label: "Pronòstics" },
         { key: "awards", label: "Premis" },
-        { key: "publicAwards", label: "Premis dels altres", publicOnlyAfterClose: true },
-        { key: "groups", label: "Grups", publicOnlyAfterClose: true },
         { key: "others", label: "Porres", publicOnlyAfterClose: true },
+        { key: "groups", label: "Grups", publicOnlyAfterClose: true },
+        { key: "publicAwards", label: "Premis dels altres", publicOnlyAfterClose: true },
         { key: "standings", label: "Classificació", publicOnlyAfterClose: true },
         { key: "admin", label: "Admin", adminOnly: true },
     ];
