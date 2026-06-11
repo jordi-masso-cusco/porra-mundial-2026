@@ -3,28 +3,39 @@ import type { Tab } from "@/types";
 type NavigationProps = {
     activeTab: Tab;
     isAdmin: boolean;
+    publicTabsEnabled: boolean;
     onTabChange: (tab: Tab) => void;
 };
 
-const tabs: { key: Tab; label: string; adminOnly?: boolean }[] = [
-    { key: "mine", label: "Pronòstics" },
-    { key: "awards", label: "Premis" },
-    { key: "publicAwards", label: "Premis dels altres" },
-    { key: "groups", label: "Grups" },
-    { key: "others", label: "Porres" },
-    { key: "standings", label: "Classificació" },
-    { key: "admin", label: "Admin", adminOnly: true },
-];
+const tabs: {
+    key: Tab;
+    label: string;
+    adminOnly?: boolean;
+    publicOnlyAfterClose?: boolean;
+}[] = [
+        { key: "mine", label: "Pronòstics" },
+        { key: "awards", label: "Premis" },
+        { key: "publicAwards", label: "Premis dels altres", publicOnlyAfterClose: true },
+        { key: "groups", label: "Grups", publicOnlyAfterClose: true },
+        { key: "others", label: "Porres", publicOnlyAfterClose: true },
+        { key: "standings", label: "Classificació", publicOnlyAfterClose: true },
+        { key: "admin", label: "Admin", adminOnly: true },
+    ];
 
 export function Navigation({
     activeTab,
     isAdmin,
+    publicTabsEnabled,
     onTabChange,
 }: NavigationProps) {
     return (
         <nav className="tabs">
             {tabs
-                .filter((tab) => !tab.adminOnly || isAdmin)
+                .filter((tab) => {
+                    if (tab.adminOnly && !isAdmin) return false;
+                    if (tab.publicOnlyAfterClose && !publicTabsEnabled && !isAdmin) return false;
+                    return true;
+                })
                 .map((tab) => (
                     <button
                         key={tab.key}

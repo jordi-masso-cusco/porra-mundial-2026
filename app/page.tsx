@@ -80,6 +80,42 @@ export default function Home() {
     setCurrentUser(data);
   }
 
+  async function handleRegister(event: React.FormEvent) {
+    event.preventDefault();
+    setError("");
+
+    const cleanName = name.trim();
+    const cleanCode = accessCode.trim();
+
+    if (!cleanName) {
+      setError("Has d'escriure un nom.");
+      return;
+    }
+
+    if (!/^\d{4}$/.test(cleanCode)) {
+      setError("El PIN ha de tenir exactament 4 dígits.");
+      return;
+    }
+
+    const { data, error } = await supabase
+      .from("users")
+      .insert({
+        name: cleanName,
+        access_code: cleanCode,
+        is_admin: false,
+      })
+      .select("id, name, is_admin")
+      .single();
+
+    if (error || !data) {
+      setError("No s'ha pogut crear l'usuari. Potser aquest nom ja existeix.");
+      return;
+    }
+
+    localStorage.setItem("porra_user", JSON.stringify(data));
+    setCurrentUser(data);
+  }
+
   async function loadData(userId: string) {
     const { data: matchesData, error: matchesError } = await supabase
       .from("matches")
@@ -448,7 +484,8 @@ export default function Home() {
         error={error}
         onNameChange={setName}
         onAccessCodeChange={setAccessCode}
-        onSubmit={handleLogin}
+        onLogin={handleLogin}
+        onRegister={handleRegister}
       />
     );
   }
@@ -470,6 +507,7 @@ export default function Home() {
       <Navigation
         activeTab={tab}
         isAdmin={currentUser.is_admin}
+        publicTabsEnabled={areGroupStagePredictionsClosed}
         onTabChange={setTab}
       />
 
