@@ -419,7 +419,7 @@ export default function Home() {
         </p>
       </div>
 
-      <button onClick={logout} style={{ marginBottom: "24px" }}>
+      <button className="logout-button" onClick={logout}>
         Sortir
       </button>
 

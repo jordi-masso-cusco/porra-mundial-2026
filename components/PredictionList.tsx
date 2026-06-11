@@ -24,7 +24,7 @@ export function PredictionList({
             <h2>Els meus pronòstics</h2>
 
             {predictionsClosed && (
-                <p style={{ color: "red" }}>
+                <p className="error">
                     Els pronòstics de la fase de grups estan tancats.
                 </p>
             )}
@@ -33,18 +33,17 @@ export function PredictionList({
                 const prediction = predictions[match.id];
 
                 return (
-                    <div
-                        key={match.id}
-                        className="card"
-                    >
-                        <strong>
-                            {match.home_team} - {match.away_team}
-                        </strong>
+                    <div key={match.id} className="card">
+                        <div className="card-title">
+                            <strong>
+                                {match.home_team} - {match.away_team}
+                            </strong>
+                            <span className="badge">Grup {match.group_name}</span>
+                        </div>
 
-                        <div style={{ marginBottom: "8px" }}>Grup {match.group_name}</div>
-
-                        <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
+                        <div className="score-row">
                             <input
+                                className="score-input"
                                 type="number"
                                 min="0"
                                 disabled={predictionsClosed}
@@ -52,12 +51,12 @@ export function PredictionList({
                                 onChange={(e) =>
                                     onPredictionChange(match.id, "predicted_home", e.target.value)
                                 }
-                                style={{ width: "64px", padding: "8px" }}
                             />
 
                             <span>-</span>
 
                             <input
+                                className="score-input"
                                 type="number"
                                 min="0"
                                 disabled={predictionsClosed}
@@ -65,7 +64,6 @@ export function PredictionList({
                                 onChange={(e) =>
                                     onPredictionChange(match.id, "predicted_away", e.target.value)
                                 }
-                                style={{ width: "64px", padding: "8px" }}
                             />
 
                             <button

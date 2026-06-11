@@ -94,3 +94,73 @@ input:disabled {
   color: var(--success);
   font-weight: 600;
 }
+
+.tabs {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  padding: 8px;
+  margin-bottom: 24px;
+  background: white;
+  border: 1px solid var(--border);
+  border-radius: 16px;
+}
+
+.tab {
+  white-space: nowrap;
+  background: transparent;
+  color: var(--muted);
+  border-radius: 12px;
+}
+
+.tab:hover {
+  background: #f3f4f6;
+  color: var(--foreground);
+}
+
+.tab.active {
+  background: var(--primary);
+  color: white;
+}
+
+.card-title {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.score-row {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  margin-top: 12px;
+}
+
+.score-input {
+  width: 64px;
+  text-align: center;
+  font-size: 18px;
+  font-weight: 700;
+}
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 999px;
+  padding: 4px 10px;
+  background: #eef2ff;
+  color: #3730a3;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.logout-button {
+  background: #111827;
+  margin-bottom: 24px;
+}
+
+.logout-button:hover {
+  background: #374151;
+}

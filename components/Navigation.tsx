@@ -6,49 +6,34 @@ type NavigationProps = {
     onTabChange: (tab: Tab) => void;
 };
 
-export function Navigation({ activeTab, isAdmin, onTabChange }: NavigationProps) {
-    const buttonStyle = (tab: Tab) => ({
-        padding: "8px 12px",
-        fontWeight: activeTab === tab ? "bold" : "normal",
-    });
+const tabs: { key: Tab; label: string; adminOnly?: boolean }[] = [
+    { key: "mine", label: "Pronòstics" },
+    { key: "awards", label: "Premis" },
+    { key: "publicAwards", label: "Premis dels altres" },
+    { key: "groups", label: "Grups" },
+    { key: "others", label: "Porres" },
+    { key: "standings", label: "Classificació" },
+    { key: "admin", label: "Admin", adminOnly: true },
+];
 
+export function Navigation({
+    activeTab,
+    isAdmin,
+    onTabChange,
+}: NavigationProps) {
     return (
-        <div style={{ display: "flex", gap: "8px", marginBottom: "24px" }}>
-            <button style={buttonStyle("mine")} onClick={() => onTabChange("mine")}>
-                Els meus pronòstics
-            </button>
-
-            <button style={buttonStyle("awards")} onClick={() => onTabChange("awards")}>
-                Premis individuals
-            </button>
-
-            <button
-                style={buttonStyle("publicAwards")}
-                onClick={() => onTabChange("publicAwards")}
-            >
-                Premis dels altres
-            </button>
-
-            <button style={buttonStyle("groups")} onClick={() => onTabChange("groups")}>
-                Grups calculats
-            </button>
-
-            <button style={buttonStyle("others")} onClick={() => onTabChange("others")}>
-                Porres dels altres
-            </button>
-
-            <button
-                style={buttonStyle("standings")}
-                onClick={() => onTabChange("standings")}
-            >
-                Classificació
-            </button>
-
-            {isAdmin && (
-                <button style={buttonStyle("admin")} onClick={() => onTabChange("admin")}>
-                    Admin
-                </button>
-            )}
-        </div>
+        <nav className="tabs">
+            {tabs
+                .filter((tab) => !tab.adminOnly || isAdmin)
+                .map((tab) => (
+                    <button
+                        key={tab.key}
+                        className={activeTab === tab.key ? "tab active" : "tab"}
+                        onClick={() => onTabChange(tab.key)}
+                    >
+                        {tab.label}
+                    </button>
+                ))}
+        </nav>
     );
 }
