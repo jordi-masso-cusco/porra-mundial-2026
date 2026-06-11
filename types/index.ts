@@ -10,6 +10,8 @@ export type Match = {
   away_team: string;
   group_name: string;
   kickoff: string;
+  home_score: number | null;
+  away_score: number | null;
 };
 
 export type Prediction = {
@@ -25,4 +27,4 @@ export type PublicPrediction = {
   matches: Match | null;
 };
 
-export type Tab = "mine" | "others" | "standings";
+export type Tab = "mine" | "others" | "standings" | "admin";

@@ -7,6 +7,7 @@ import { PredictionList } from "@/components/PredictionList";
 import { PublicPredictions } from "@/components/PublicPredictions";
 import { supabase } from "@/lib/supabase";
 import type { Match, Prediction, PublicPrediction, Tab, User } from "@/types";
+import { AdminResults } from "@/components/AdminResults";
 
 export default function Home() {
   const [tab, setTab] = useState<Tab>("mine");
@@ -176,6 +177,54 @@ export default function Home() {
     setTab("mine");
   }
 
+  function updateOfficialResult(
+    matchId: number,
+    field: "home_score" | "away_score",
+    value: string
+  ) {
+    const numericValue = value === "" ? null : Number(value);
+
+    setMatches((currentMatches) =>
+      currentMatches.map((match) =>
+        match.id === matchId
+          ? {
+            ...match,
+            [field]: numericValue,
+          }
+          : match
+      )
+    );
+  }
+
+  async function saveOfficialResult(matchId: number) {
+    const match = matches.find((item) => item.id === matchId);
+
+    if (!match) return;
+
+    if (match.home_score === null || match.away_score === null) {
+      setError("Has d'omplir els dos resultats abans de desar.");
+      return;
+    }
+
+    setError("");
+    setSavedMessage("");
+
+    const { error } = await supabase
+      .from("matches")
+      .update({
+        home_score: match.home_score,
+        away_score: match.away_score,
+      })
+      .eq("id", matchId);
+
+    if (error) {
+      setError("No s'ha pogut desar el resultat oficial.");
+      return;
+    }
+
+    setSavedMessage("Resultat oficial desat correctament.");
+  }
+
   if (!currentUser) {
     return (
       <LoginForm
@@ -202,7 +251,11 @@ export default function Home() {
         Sortir
       </button>
 
-      <Navigation activeTab={tab} onTabChange={setTab} />
+      <Navigation
+        activeTab={tab}
+        isAdmin={currentUser.is_admin}
+        onTabChange={setTab}
+      />
 
       {error && <p style={{ color: "red" }}>{error}</p>}
       {savedMessage && <p style={{ color: "green" }}>{savedMessage}</p>}
@@ -225,6 +278,14 @@ export default function Home() {
           <h2>Classificació</h2>
           <p>La classificació la calcularem quan definim resultats reals i punts.</p>
         </>
+      )}
+
+      {tab === "admin" && currentUser.is_admin && (
+        <AdminResults
+          matches={matches}
+          onResultChange={updateOfficialResult}
+          onSaveResult={saveOfficialResult}
+        />
       )}
     </main>
   );
