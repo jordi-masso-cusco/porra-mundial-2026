@@ -131,3 +131,29 @@ export function calculatePredictedGroupStandings(
     ])
   );
 }
+
+export function getQualifiedTeams(
+  groupStandings: Record<string, TeamStanding[]>
+) {
+  const qualified = new Set<string>();
+  const thirdPlacedTeams: TeamStanding[] = [];
+
+  for (const rows of Object.values(groupStandings)) {
+    if (rows[0]) qualified.add(rows[0].team);
+    if (rows[1]) qualified.add(rows[1].team);
+    if (rows[2]) thirdPlacedTeams.push(rows[2]);
+  }
+
+  thirdPlacedTeams
+    .sort((a, b) => {
+      if (b.points !== a.points) return b.points - a.points;
+      if (b.goalDifference !== a.goalDifference) {
+        return b.goalDifference - a.goalDifference;
+      }
+      return b.goalsFor - a.goalsFor;
+    })
+    .slice(0, 8)
+    .forEach((team) => qualified.add(team.team));
+
+  return qualified;
+}

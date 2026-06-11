@@ -1,5 +1,6 @@
 import type { Match, Prediction } from "@/types";
 import { flagUrl } from "@/lib/flags";
+import { getQualifiedTeams } from "@/lib/groupStandings";
 
 type PredictionListProps = {
     matches: Match[];
@@ -139,6 +140,15 @@ export function PredictionList({
 }: PredictionListProps) {
     const matchesByGroup = groupMatchesByGroup(matches);
 
+    const allPredictedGroupStandings = Object.fromEntries(
+        Object.entries(matchesByGroup).map(([groupName, groupMatches]) => [
+            groupName,
+            calculatePredictedStandings(groupMatches, predictions),
+        ])
+    );
+
+    const qualifiedTeams = getQualifiedTeams(allPredictedGroupStandings);
+
     return (
         <>
             <h2>Els meus pronòstics</h2>
@@ -239,6 +249,7 @@ export function PredictionList({
                                 {standingsRows.map((row, index) => (
                                     <div
                                         key={row.team}
+                                        className={qualifiedTeams.has(row.team) ? "qualified-row" : "eliminated-row"}
                                         style={{
                                             display: "grid",
                                             gridTemplateColumns: "32px 1fr 60px 60px 60px 60px",

@@ -1,6 +1,6 @@
 import type { Match } from "@/types";
 import { flagUrl } from "@/lib/flags";
-import { calculateRealGroupStandings } from "@/lib/groupStandings";
+import { calculateRealGroupStandings, getQualifiedTeams } from "@/lib/groupStandings";
 
 type AdminResultsProps = {
     matches: Match[];
@@ -56,6 +56,7 @@ export function AdminResults({
 }: AdminResultsProps) {
     const matchesByGroup = groupMatchesByGroup(matches);
     const realGroupStandings = calculateRealGroupStandings(matches);
+    const qualifiedTeams = getQualifiedTeams(realGroupStandings);
 
     return (
         <>
@@ -140,6 +141,7 @@ export function AdminResults({
                                 {standingsRows.map((row, index) => (
                                     <div
                                         key={row.team}
+                                        className={qualifiedTeams.has(row.team) ? "qualified-row" : "eliminated-row"}
                                         style={{
                                             display: "grid",
                                             gridTemplateColumns: "32px 1fr 60px 60px 60px 60px",

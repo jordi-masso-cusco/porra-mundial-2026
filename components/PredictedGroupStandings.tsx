@@ -1,7 +1,6 @@
 import type { Match, PublicPrediction } from "@/types";
-
-
 import { flagUrl } from "@/lib/flags";
+import { getQualifiedTeams } from "@/lib/groupStandings";
 
 type PredictedGroupStandingsProps = {
     matches: Match[];
@@ -101,6 +100,22 @@ export function PredictedGroupStandings({
                     away.goalDifference = away.goalsFor - away.goalsAgainst;
                 }
 
+                const orderedGroups = Object.fromEntries(
+                    Object.entries(groups).map(([groupName, standings]) => {
+                        const rows = Object.values(standings).sort((a, b) => {
+                            if (b.points !== a.points) return b.points - a.points;
+                            if (b.goalDifference !== a.goalDifference) {
+                                return b.goalDifference - a.goalDifference;
+                            }
+                            return b.goalsFor - a.goalsFor;
+                        });
+
+                        return [groupName, rows];
+                    })
+                );
+
+                const qualifiedTeams = getQualifiedTeams(orderedGroups);
+
                 return (
                     <details
                         key={userName}
@@ -110,7 +125,7 @@ export function PredictedGroupStandings({
                             <strong>{userName}</strong>
                         </summary>
 
-                        {Object.entries(groups)
+                        {Object.entries(orderedGroups)
                             .sort(([groupA], [groupB]) => groupA.localeCompare(groupB))
                             .map(([groupName, standings]) => {
                                 const rows = Object.values(standings).sort((a, b) => {
@@ -128,6 +143,7 @@ export function PredictedGroupStandings({
                                         {rows.map((row, index) => (
                                             <div
                                                 key={row.team}
+                                                className={qualifiedTeams.has(row.team) ? "qualified-row" : "eliminated-row"}
                                                 style={{
                                                     display: "grid",
                                                     gridTemplateColumns: "32px 1fr 60px 60px 60px",
