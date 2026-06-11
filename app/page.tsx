@@ -126,7 +126,9 @@ export default function Home() {
           home_team,
           away_team,
           group_name,
-          kickoff
+          kickoff,
+          home_score,
+          away_score
         )
       `);
 

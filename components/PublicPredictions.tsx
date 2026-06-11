@@ -5,6 +5,41 @@ type PublicPredictionsProps = {
     publicPredictions: PublicPrediction[];
 };
 
+function getMatchKey(prediction: PublicPrediction) {
+    return prediction.matches?.id ?? 0;
+}
+
+function getSign(home: number, away: number) {
+    if (home > away) return "1";
+    if (home < away) return "2";
+    return "X";
+}
+
+function getPredictionPoints(prediction: PublicPrediction) {
+    const match = prediction.matches;
+
+    if (!match) return null;
+    if (match.home_score === null || match.away_score === null) return null;
+    if (
+        prediction.predicted_home === null ||
+        prediction.predicted_away === null
+    ) {
+        return null;
+    }
+
+    const exact =
+        prediction.predicted_home === match.home_score &&
+        prediction.predicted_away === match.away_score;
+
+    if (exact) return 10;
+
+    const signCorrect =
+        getSign(prediction.predicted_home, prediction.predicted_away) ===
+        getSign(match.home_score, match.away_score);
+
+    return signCorrect ? 5 : 0;
+}
+
 export function PublicPredictions({
     publicPredictions,
 }: PublicPredictionsProps) {
@@ -24,6 +59,19 @@ export function PublicPredictions({
             : publicPredictions.filter(
                 (prediction) => prediction.users?.name === selectedUser
             );
+
+    const predictionsByMatch = filteredPredictions.reduce<
+        Record<number, PublicPrediction[]>
+    >((groups, prediction) => {
+        const matchKey = getMatchKey(prediction);
+
+        if (!groups[matchKey]) {
+            groups[matchKey] = [];
+        }
+
+        groups[matchKey].push(prediction);
+        return groups;
+    }, {});
 
     return (
         <>
@@ -51,7 +99,7 @@ export function PublicPredictions({
                     >
                         <option value="all">Tots</option>
                         {users.map((user) => (
-                            <option key={user} value={user}>
+                            <option key={user} value={user ?? ""}>
                                 {user}
                             </option>
                         ))}
@@ -59,25 +107,47 @@ export function PublicPredictions({
                 </div>
             )}
 
-            {filteredPredictions.map((prediction, index) => (
-                <div key={index} className="card">
-                    <div className="card-title">
-                        <strong>{prediction.users?.name}</strong>
-                        <span className="badge">Grup {prediction.matches?.group_name}</span>
-                    </div>
+            {Object.values(predictionsByMatch).map((matchPredictions) => {
+                const match = matchPredictions[0]?.matches;
 
-                    <div className="muted">
-                        {prediction.matches?.home_team} - {prediction.matches?.away_team}
-                    </div>
+                return (
+                    <div key={match?.id} className="card">
+                        <div className="card-title">
+                            <strong>
+                                {match?.home_team} - {match?.away_team}
+                            </strong>
+                            <span className="badge">Grup {match?.group_name}</span>
+                        </div>
 
-                    <div style={{ marginTop: "8px" }}>
-                        Pronòstic:{" "}
-                        <strong>
-                            {prediction.predicted_home} - {prediction.predicted_away}
-                        </strong>
+                        {matchPredictions.map((prediction, index) => {
+                            const points = getPredictionPoints(prediction);
+
+                            return (
+                                <div
+                                    key={index}
+                                    style={{
+                                        display: "grid",
+                                        gridTemplateColumns: "1fr auto auto",
+                                        gap: "12px",
+                                        alignItems: "center",
+                                        borderTop: index === 0 ? "0" : "1px solid #eee",
+                                        paddingTop: index === 0 ? "0" : "8px",
+                                        marginTop: index === 0 ? "8px" : "8px",
+                                    }}
+                                >
+                                    <span>{prediction.users?.name}</span>
+
+                                    <strong>
+                                        {prediction.predicted_home} - {prediction.predicted_away}
+                                    </strong>
+
+                                    {points !== null && <span className="badge">+{points}</span>}
+                                </div>
+                            );
+                        })}
                     </div>
-                </div>
-            ))}
+                );
+            })}
         </>
     );
 }
