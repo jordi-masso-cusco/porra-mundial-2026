@@ -10,6 +10,15 @@ type AdminResultsProps = {
     onSaveResult: (matchId: number) => void;
 };
 
+function formatKickoff(kickoff: string) {
+    return new Intl.DateTimeFormat("ca-ES", {
+        day: "2-digit",
+        month: "2-digit",
+        hour: "2-digit",
+        minute: "2-digit",
+    }).format(new Date(kickoff));
+}
+
 export function AdminResults({
     matches,
     onResultChange,
@@ -27,6 +36,8 @@ export function AdminResults({
                         </strong>
                         <span className="badge">Grup {match.group_name}</span>
                     </div>
+
+                    <div className="muted">{formatKickoff(match.kickoff)}</div>
 
                     <div className="score-row">
                         <input

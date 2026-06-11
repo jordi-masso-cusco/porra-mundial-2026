@@ -12,6 +12,26 @@ type PredictionListProps = {
     onSavePrediction: (matchId: number) => void;
 };
 
+function groupMatchesByGroup(matches: Match[]) {
+    return matches.reduce<Record<string, Match[]>>((groups, match) => {
+        if (!groups[match.group_name]) {
+            groups[match.group_name] = [];
+        }
+
+        groups[match.group_name].push(match);
+        return groups;
+    }, {});
+}
+
+function formatKickoff(kickoff: string) {
+    return new Intl.DateTimeFormat("ca-ES", {
+        day: "2-digit",
+        month: "2-digit",
+        hour: "2-digit",
+        minute: "2-digit",
+    }).format(new Date(kickoff));
+}
+
 export function PredictionList({
     matches,
     predictions,
@@ -19,6 +39,8 @@ export function PredictionList({
     onPredictionChange,
     onSavePrediction,
 }: PredictionListProps) {
+    const matchesByGroup = groupMatchesByGroup(matches);
+
     return (
         <>
             <h2>Els meus pronòstics</h2>
@@ -29,53 +51,69 @@ export function PredictionList({
                 </p>
             )}
 
-            {matches.map((match) => {
-                const prediction = predictions[match.id];
+            {Object.entries(matchesByGroup).map(([groupName, groupMatches]) => (
+                <section key={groupName} className="group-section">
+                    <h3>Grup {groupName}</h3>
 
-                return (
-                    <div key={match.id} className="card">
-                        <div className="card-title">
-                            <strong>
-                                {match.home_team} - {match.away_team}
-                            </strong>
-                            <span className="badge">Grup {match.group_name}</span>
-                        </div>
+                    {groupMatches.map((match) => {
+                        const prediction = predictions[match.id];
 
-                        <div className="score-row">
-                            <input
-                                className="score-input"
-                                type="number"
-                                min="0"
-                                disabled={predictionsClosed}
-                                value={prediction?.predicted_home ?? ""}
-                                onChange={(e) =>
-                                    onPredictionChange(match.id, "predicted_home", e.target.value)
-                                }
-                            />
+                        return (
+                            <div key={match.id} className="card">
+                                <div className="card-title">
+                                    <strong>
+                                        {match.home_team} - {match.away_team}
+                                    </strong>
+                                    <span className="badge">Grup {match.group_name}</span>
+                                </div>
 
-                            <span>-</span>
+                                <div className="muted">{formatKickoff(match.kickoff)}</div>
 
-                            <input
-                                className="score-input"
-                                type="number"
-                                min="0"
-                                disabled={predictionsClosed}
-                                value={prediction?.predicted_away ?? ""}
-                                onChange={(e) =>
-                                    onPredictionChange(match.id, "predicted_away", e.target.value)
-                                }
-                            />
+                                <div className="score-row">
+                                    <input
+                                        className="score-input"
+                                        type="number"
+                                        min="0"
+                                        disabled={predictionsClosed}
+                                        value={prediction?.predicted_home ?? ""}
+                                        onChange={(e) =>
+                                            onPredictionChange(
+                                                match.id,
+                                                "predicted_home",
+                                                e.target.value
+                                            )
+                                        }
+                                    />
 
-                            <button
-                                disabled={predictionsClosed}
-                                onClick={() => onSavePrediction(match.id)}
-                            >
-                                Desar
-                            </button>
-                        </div>
-                    </div>
-                );
-            })}
+                                    <span>-</span>
+
+                                    <input
+                                        className="score-input"
+                                        type="number"
+                                        min="0"
+                                        disabled={predictionsClosed}
+                                        value={prediction?.predicted_away ?? ""}
+                                        onChange={(e) =>
+                                            onPredictionChange(
+                                                match.id,
+                                                "predicted_away",
+                                                e.target.value
+                                            )
+                                        }
+                                    />
+
+                                    <button
+                                        disabled={predictionsClosed}
+                                        onClick={() => onSavePrediction(match.id)}
+                                    >
+                                        Desar
+                                    </button>
+                                </div>
+                            </div>
+                        );
+                    })}
+                </section>
+            ))}
         </>
     );
 }
