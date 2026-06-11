@@ -1,0 +1,28 @@
+export type User = {
+  id: string;
+  name: string;
+  is_admin: boolean;
+};
+
+export type Match = {
+  id: number;
+  home_team: string;
+  away_team: string;
+  group_name: string;
+  kickoff: string;
+};
+
+export type Prediction = {
+  match_id: number;
+  predicted_home: number | null;
+  predicted_away: number | null;
+};
+
+export type PublicPrediction = {
+  predicted_home: number | null;
+  predicted_away: number | null;
+  users: { name: string } | null;
+  matches: Match | null;
+};
+
+export type Tab = "mine" | "others" | "standings";

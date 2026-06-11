@@ -1,48 +1,35 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { LoginForm } from "@/components/LoginForm";
+import { Navigation } from "@/components/Navigation";
+import { PredictionList } from "@/components/PredictionList";
+import { PublicPredictions } from "@/components/PublicPredictions";
 import { supabase } from "@/lib/supabase";
-
-type User = {
-  id: string;
-  name: string;
-  is_admin: boolean;
-};
-
-type Match = {
-  id: number;
-  home_team: string;
-  away_team: string;
-  group_name: string;
-  kickoff: string;
-};
-
-type Prediction = {
-  match_id: number;
-  predicted_home: number | null;
-  predicted_away: number | null;
-};
+import type { Match, Prediction, PublicPrediction, Tab, User } from "@/types";
 
 export default function Home() {
+  const [tab, setTab] = useState<Tab>("mine");
   const [name, setName] = useState("");
   const [accessCode, setAccessCode] = useState("");
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [matches, setMatches] = useState<Match[]>([]);
   const [predictions, setPredictions] = useState<Record<number, Prediction>>({});
+  const [publicPredictions, setPublicPredictions] = useState<
+    PublicPrediction[]
+  >([]);
   const [error, setError] = useState("");
   const [savedMessage, setSavedMessage] = useState("");
 
   useEffect(() => {
     const savedUser = localStorage.getItem("porra_user");
-
-    if (savedUser) {
-      setCurrentUser(JSON.parse(savedUser));
-    }
+    if (savedUser) setCurrentUser(JSON.parse(savedUser));
   }, []);
 
   useEffect(() => {
     if (currentUser) {
       loadData(currentUser.id);
+      loadPublicPredictions();
     }
   }, [currentUser]);
 
@@ -98,6 +85,32 @@ export default function Home() {
     setPredictions(predictionsByMatch);
   }
 
+  async function loadPublicPredictions() {
+    const { data, error } = await supabase
+      .from("predictions")
+      .select(`
+        predicted_home,
+        predicted_away,
+        users (
+          name
+        ),
+        matches (
+          id,
+          home_team,
+          away_team,
+          group_name,
+          kickoff
+        )
+      `);
+
+    if (error) {
+      setError("No s'han pogut carregar les porres dels altres.");
+      return;
+    }
+
+    setPublicPredictions((data ?? []) as unknown as PublicPrediction[]);
+  }
+
   function updatePrediction(
     matchId: number,
     field: "predicted_home" | "predicted_away",
@@ -141,9 +154,7 @@ export default function Home() {
         predicted_away: prediction.predicted_away,
         updated_at: new Date().toISOString(),
       },
-      {
-        onConflict: "user_id,match_id",
-      }
+      { onConflict: "user_id,match_id" }
     );
 
     if (error) {
@@ -152,6 +163,7 @@ export default function Home() {
     }
 
     setSavedMessage("Pronòstic desat correctament.");
+    loadPublicPredictions();
   }
 
   function logout() {
@@ -160,40 +172,20 @@ export default function Home() {
     setName("");
     setAccessCode("");
     setPredictions({});
+    setPublicPredictions([]);
+    setTab("mine");
   }
 
   if (!currentUser) {
     return (
-      <main style={{ padding: "24px", maxWidth: "420px", margin: "0 auto" }}>
-        <h1>Porra Mundial 2026</h1>
-
-        <form onSubmit={handleLogin}>
-          <div style={{ marginBottom: "12px" }}>
-            <label>Nom</label>
-            <input
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              style={{ display: "block", width: "100%", padding: "8px" }}
-            />
-          </div>
-
-          <div style={{ marginBottom: "12px" }}>
-            <label>Codi</label>
-            <input
-              type="password"
-              value={accessCode}
-              onChange={(e) => setAccessCode(e.target.value)}
-              style={{ display: "block", width: "100%", padding: "8px" }}
-            />
-          </div>
-
-          <button type="submit" style={{ padding: "8px 16px" }}>
-            Entrar
-          </button>
-        </form>
-
-        {error && <p style={{ color: "red" }}>{error}</p>}
-      </main>
+      <LoginForm
+        name={name}
+        accessCode={accessCode}
+        error={error}
+        onNameChange={setName}
+        onAccessCodeChange={setAccessCode}
+        onSubmit={handleLogin}
+      />
     );
   }
 
@@ -210,58 +202,30 @@ export default function Home() {
         Sortir
       </button>
 
-      <h2>Els meus pronòstics</h2>
+      <Navigation activeTab={tab} onTabChange={setTab} />
 
       {error && <p style={{ color: "red" }}>{error}</p>}
       {savedMessage && <p style={{ color: "green" }}>{savedMessage}</p>}
 
-      {matches.map((match) => {
-        const prediction = predictions[match.id];
+      {tab === "mine" && (
+        <PredictionList
+          matches={matches}
+          predictions={predictions}
+          onPredictionChange={updatePrediction}
+          onSavePrediction={savePrediction}
+        />
+      )}
 
-        return (
-          <div
-            key={match.id}
-            style={{
-              border: "1px solid #ccc",
-              padding: "12px",
-              marginBottom: "12px",
-              borderRadius: "8px",
-            }}
-          >
-            <strong>
-              {match.home_team} - {match.away_team}
-            </strong>
+      {tab === "others" && (
+        <PublicPredictions publicPredictions={publicPredictions} />
+      )}
 
-            <div style={{ marginBottom: "8px" }}>Grup {match.group_name}</div>
-
-            <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
-              <input
-                type="number"
-                min="0"
-                value={prediction?.predicted_home ?? ""}
-                onChange={(e) =>
-                  updatePrediction(match.id, "predicted_home", e.target.value)
-                }
-                style={{ width: "64px", padding: "8px" }}
-              />
-
-              <span>-</span>
-
-              <input
-                type="number"
-                min="0"
-                value={prediction?.predicted_away ?? ""}
-                onChange={(e) =>
-                  updatePrediction(match.id, "predicted_away", e.target.value)
-                }
-                style={{ width: "64px", padding: "8px" }}
-              />
-
-              <button onClick={() => savePrediction(match.id)}>Desar</button>
-            </div>
-          </div>
-        );
-      })}
+      {tab === "standings" && (
+        <>
+          <h2>Classificació</h2>
+          <p>La classificació la calcularem quan definim resultats reals i punts.</p>
+        </>
+      )}
     </main>
   );
 }
