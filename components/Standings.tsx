@@ -1,5 +1,10 @@
 import type { Match, PublicPrediction } from "@/types";
 
+import {
+    calculatePredictedGroupStandings,
+    calculateRealGroupStandings,
+} from "@/lib/groupStandings";
+
 type StandingDetail = {
     matchName: string;
     prediction: string;
@@ -80,6 +85,43 @@ export function Standings({ matches, publicPredictions }: StandingsProps) {
             points,
             reason,
         });
+    }
+
+    const realGroupStandings = calculateRealGroupStandings(matches);
+
+    for (const row of Object.values(standings)) {
+        const predictedGroupStandings = calculatePredictedGroupStandings(
+            matches,
+            publicPredictions,
+            row.userName
+        );
+
+        for (const [groupName, realRows] of Object.entries(realGroupStandings)) {
+            const predictedRows = predictedGroupStandings[groupName];
+
+            if (!predictedRows) continue;
+            if (realRows.length < 4 || predictedRows.length < 4) continue;
+
+            for (let index = 0; index < realRows.length; index++) {
+                const realTeam = realRows[index]?.team;
+                const predictedTeam = predictedRows[index]?.team;
+
+                if (!realTeam || !predictedTeam) continue;
+                if (realTeam !== predictedTeam) continue;
+
+                const position = index + 1;
+                const points = position <= 2 ? 10 : 5;
+
+                row.points += points;
+                row.details.push({
+                    matchName: `Grup ${groupName} · Posició ${position}`,
+                    prediction: predictedTeam,
+                    result: realTeam,
+                    points,
+                    reason: "Posició exacta de grup",
+                });
+            }
+        }
     }
 
     const rows = Object.values(standings).sort((a, b) => b.points - a.points);
