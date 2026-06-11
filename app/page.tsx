@@ -469,10 +469,12 @@ export default function Home() {
 
       if (!match) return false;
 
-      const exceptionMatchIds = [1, 2];
+      const isExceptionMatch =
+        (match.home_team === "Mexico" && match.away_team === "South Africa") ||
+        (match.home_team === "Korea Republic" && match.away_team === "Czechia");
+
       const exceptionMatchLocked =
-        exceptionMatchIds.includes(match.id) &&
-        new Date() >= new Date(match.kickoff);
+        isExceptionMatch && new Date() >= new Date(match.kickoff);
 
       return (
         !exceptionMatchLocked &&

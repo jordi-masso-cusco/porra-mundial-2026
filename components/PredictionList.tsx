@@ -123,12 +123,11 @@ function calculatePredictedStandings(
 }
 
 function isExceptionMatchLocked(match: Match) {
-    const exceptionMatchIds = [1, 2];
+    const isExceptionMatch =
+        (match.home_team === "Mexico" && match.away_team === "South Africa") ||
+        (match.home_team === "Korea Republic" && match.away_team === "Czechia");
 
-    return (
-        exceptionMatchIds.includes(match.id) &&
-        new Date() >= new Date(match.kickoff)
-    );
+    return isExceptionMatch && new Date() >= new Date(match.kickoff);
 }
 
 export function PredictionList({
