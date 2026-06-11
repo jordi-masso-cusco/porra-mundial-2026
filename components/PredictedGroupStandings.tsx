@@ -34,14 +34,14 @@ function getOrCreateTeam(
 }
 
 function TeamName({ team }: { team: string }) {
-  const url = flagUrl(team);
+    const url = flagUrl(team);
 
-  return (
-    <span className="team-name">
-      {url && <img src={url} alt="" className="flag" />}
-      {team}
-    </span>
-  );
+    return (
+        <span className="team-name">
+            {url && <img src={url} alt="" className="flag" />}
+            {team}
+        </span>
+    );
 }
 
 export function PredictedGroupStandings({
@@ -110,42 +110,44 @@ export function PredictedGroupStandings({
                             <strong>{userName}</strong>
                         </summary>
 
-                        {Object.entries(groups).map(([groupName, standings]) => {
-                            const rows = Object.values(standings).sort((a, b) => {
-                                if (b.points !== a.points) return b.points - a.points;
-                                if (b.goalDifference !== a.goalDifference) {
-                                    return b.goalDifference - a.goalDifference;
-                                }
-                                return b.goalsFor - a.goalsFor;
-                            });
+                        {Object.entries(groups)
+                            .sort(([groupA], [groupB]) => groupA.localeCompare(groupB))
+                            .map(([groupName, standings]) => {
+                                const rows = Object.values(standings).sort((a, b) => {
+                                    if (b.points !== a.points) return b.points - a.points;
+                                    if (b.goalDifference !== a.goalDifference) {
+                                        return b.goalDifference - a.goalDifference;
+                                    }
+                                    return b.goalsFor - a.goalsFor;
+                                });
 
-                            return (
-                                <div key={groupName} style={{ marginTop: "16px" }}>
-                                    <h3>Grup {groupName}</h3>
+                                return (
+                                    <div key={groupName} style={{ marginTop: "16px" }}>
+                                        <h3>Grup {groupName}</h3>
 
-                                    {rows.map((row, index) => (
-                                        <div
-                                            key={row.team}
-                                            style={{
-                                                display: "grid",
-                                                gridTemplateColumns: "32px 1fr 60px 60px 60px",
-                                                gap: "8px",
-                                                padding: "6px 0",
-                                                borderTop: "1px solid #eee",
-                                            }}
-                                        >
-                                            <span>{index + 1}</span>
-                                            <strong>
-                                                <TeamName team={row.team} />
-                                            </strong>
-                                            <span>{row.points} pts</span>
-                                            <span>DG {row.goalDifference}</span>
-                                            <span>GF {row.goalsFor}</span>
-                                        </div>
-                                    ))}
-                                </div>
-                            );
-                        })}
+                                        {rows.map((row, index) => (
+                                            <div
+                                                key={row.team}
+                                                style={{
+                                                    display: "grid",
+                                                    gridTemplateColumns: "32px 1fr 60px 60px 60px",
+                                                    gap: "8px",
+                                                    padding: "6px 0",
+                                                    borderTop: "1px solid #eee",
+                                                }}
+                                            >
+                                                <span>{index + 1}</span>
+                                                <strong>
+                                                    <TeamName team={row.team} />
+                                                </strong>
+                                                <span>{row.points} pts</span>
+                                                <span>DG {row.goalDifference}</span>
+                                                <span>GF {row.goalsFor}</span>
+                                            </div>
+                                        ))}
+                                    </div>
+                                );
+                            })}
                     </details>
                 );
             })}

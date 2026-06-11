@@ -21,6 +21,7 @@ import type {
 } from "@/types";
 import { PublicAwards } from "@/components/PublicAwards";
 import { AdminAwards } from "@/components/AdminAwards";
+import { AdminGroupStandings } from "@/components/AdminGroupStandings";
 import { supabase } from "@/lib/supabase";
 
 export default function Home() {
@@ -601,6 +602,8 @@ export default function Home() {
             onResultChange={updateOfficialResult}
             onSaveResult={saveOfficialResult}
           />
+
+          <AdminGroupStandings matches={matches} />
 
           <AdminAwards
             results={awardResults}
