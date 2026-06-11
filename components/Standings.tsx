@@ -192,27 +192,20 @@ export function Standings({
             )}
 
             {rows.map((row, index) => (
-                <details
-                    key={row.userName}
-                    style={{
-                        border: "1px solid #ccc",
-                        padding: "12px",
-                        marginBottom: "8px",
-                        borderRadius: "8px",
-                    }}
-                >
+                <details key={row.userName} className="card">
                     <summary
                         style={{
                             display: "flex",
                             justifyContent: "space-between",
                             cursor: "pointer",
+                            alignItems: "center",
                         }}
                     >
                         <strong>
                             {index + 1}. {row.userName}
                         </strong>
 
-                        <span>{row.points} punts</span>
+                        <span className="badge">{row.points} punts</span>
                     </summary>
 
                     <div style={{ marginTop: "12px" }}>
@@ -226,10 +219,10 @@ export function Standings({
                                 }}
                             >
                                 <strong>{detail.matchName}</strong>
-                                <div>Pronòstic: {detail.prediction}</div>
-                                <div>Resultat: {detail.result}</div>
+                                <div className="muted">Pronòstic: {detail.prediction}</div>
+                                <div className="muted">Resultat: {detail.result}</div>
                                 <div>
-                                    {detail.points} punts · {detail.reason}
+                                    <strong>{detail.points} punts</strong> · {detail.reason}
                                 </div>
                             </div>
                         ))}
