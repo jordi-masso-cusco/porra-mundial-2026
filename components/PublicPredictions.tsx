@@ -1,6 +1,5 @@
 import { useState } from "react";
 import type { PublicPrediction } from "@/types";
-
 import { flagUrl } from "@/lib/flags";
 
 type PublicPredictionsProps = {
@@ -151,64 +150,74 @@ export function PublicPredictions({
                 <section key={groupName} className="group-section">
                     <h3>Grup {groupName}</h3>
 
-                    {Object.values(matches).map((matchPredictions) => {
-                        const match = matchPredictions[0]?.matches;
-                        const officialResultAvailable = hasOfficialResult(
-                            matchPredictions[0]
-                        );
+                    <div className="matches-grid">
+                        {Object.values(matches).map((matchPredictions) => {
+                            const match = matchPredictions[0]?.matches;
+                            const officialResultAvailable = hasOfficialResult(
+                                matchPredictions[0]
+                            );
 
-                        return (
-                            <div key={match?.id} className="card">
-                                <div className="card-title">
-                                    {match && (
-                                        <>
+                            if (!match) return null;
+
+                            return (
+                                <div key={match.id} className="card">
+                                    <div className="compact-match">
+                                        <div className="team-left">
                                             <TeamName team={match.home_team} />
-                                            {" - "}
-                                            <TeamName team={match.away_team} />
-                                        </>
-                                    )}
+                                        </div>
 
-                                    {officialResultAvailable ? (
-                                        <span className="badge">
-                                            Resultat {match?.home_score} - {match?.away_score}
-                                        </span>
-                                    ) : (
-                                        <span className="badge">Pendent</span>
-                                    )}
-                                </div>
-
-                                {matchPredictions.map((prediction, index) => {
-                                    const points = getPredictionPoints(prediction);
-
-                                    return (
-                                        <div
-                                            key={index}
-                                            style={{
-                                                display: "grid",
-                                                gridTemplateColumns: "1fr auto auto",
-                                                gap: "12px",
-                                                alignItems: "center",
-                                                borderTop: index === 0 ? "0" : "1px solid #eee",
-                                                paddingTop: index === 0 ? "0" : "8px",
-                                                marginTop: index === 0 ? "8px" : "8px",
-                                            }}
-                                        >
-                                            <span>{prediction.users?.name}</span>
-
-                                            <strong>
-                                                {prediction.predicted_home} -{" "}
-                                                {prediction.predicted_away}
-                                            </strong>
-
-                                            {points !== null && (
-                                                <span className="badge">+{points}</span>
+                                        <div className="score-center">
+                                            {officialResultAvailable ? (
+                                                <strong>
+                                                    {match.home_score} - {match.away_score}
+                                                </strong>
+                                            ) : (
+                                                <span className="badge">Pendent</span>
                                             )}
                                         </div>
-                                    );
-                                })}
-                            </div>
-                        );
-                    })}
+
+                                        <div className="team-right">
+                                            <TeamName team={match.away_team} />
+                                        </div>
+                                    </div>
+
+                                    <div style={{ marginTop: "10px" }}>
+                                        {matchPredictions.map((prediction, index) => {
+                                            const points = getPredictionPoints(prediction);
+
+                                            return (
+                                                <div
+                                                    key={index}
+                                                    style={{
+                                                        display: "grid",
+                                                        gridTemplateColumns: "1fr auto auto",
+                                                        gap: "10px",
+                                                        alignItems: "center",
+                                                        borderTop: index === 0 ? "0" : "1px solid #eee",
+                                                        padding: "6px 0",
+                                                        fontSize: "0.95rem",
+                                                    }}
+                                                >
+                                                    <span>{prediction.users?.name}</span>
+
+                                                    <strong>
+                                                        {prediction.predicted_home} -{" "}
+                                                        {prediction.predicted_away}
+                                                    </strong>
+
+                                                    {points !== null && points > 0 ? (
+                                                        <span className="badge">+{points}</span>
+                                                    ) : (
+                                                        <span />
+                                                    )}
+                                                </div>
+                                            );
+                                        })}
+                                    </div>
+                                </div>
+                            );
+                        })}
+                    </div>
                 </section>
             ))}
         </>

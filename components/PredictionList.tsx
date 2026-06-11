@@ -10,7 +10,6 @@ type PredictionListProps = {
         field: "predicted_home" | "predicted_away",
         value: string
     ) => void;
-    onSavePrediction: (matchId: number) => void;
     onSaveAllPredictions: () => void;
 };
 
@@ -47,7 +46,6 @@ export function PredictionList({
     predictions,
     predictionsClosed,
     onPredictionChange,
-    onSavePrediction,
     onSaveAllPredictions,
 }: PredictionListProps) {
     const matchesByGroup = groupMatchesByGroup(matches);
@@ -129,12 +127,6 @@ export function PredictionList({
                                     <div className="match-footer">
                                         <span>{formatKickoff(match.kickoff)}</span>
 
-                                        <button
-                                            disabled={predictionsClosed}
-                                            onClick={() => onSavePrediction(match.id)}
-                                        >
-                                            Desar
-                                        </button>
                                     </div>
                                 </div>
                             );

@@ -145,6 +145,17 @@ export default function Home() {
       predictionsByMatch[prediction.match_id] = prediction;
     }
 
+    const savedDraft = localStorage.getItem(`porra_draft_predictions_${userId}`);
+
+    if (savedDraft) {
+      const draftPredictions = JSON.parse(savedDraft);
+      setPredictions({
+        ...predictionsByMatch,
+        ...draftPredictions,
+      });
+      return;
+    }
+
     setPredictions(predictionsByMatch);
   }
 
@@ -183,15 +194,26 @@ export default function Home() {
   ) {
     const numericValue = value === "" ? null : Number(value);
 
-    setPredictions((current) => ({
-      ...current,
-      [matchId]: {
-        match_id: matchId,
-        predicted_home: current[matchId]?.predicted_home ?? null,
-        predicted_away: current[matchId]?.predicted_away ?? null,
-        [field]: numericValue,
-      },
-    }));
+    setPredictions((current) => {
+      const updatedPredictions = {
+        ...current,
+        [matchId]: {
+          match_id: matchId,
+          predicted_home: current[matchId]?.predicted_home ?? null,
+          predicted_away: current[matchId]?.predicted_away ?? null,
+          [field]: numericValue,
+        },
+      };
+
+      if (currentUser) {
+        localStorage.setItem(
+          `porra_draft_predictions_${currentUser.id}`,
+          JSON.stringify(updatedPredictions)
+        );
+      }
+
+      return updatedPredictions;
+    });
   }
 
   async function savePrediction(matchId: number) {
@@ -473,6 +495,7 @@ export default function Home() {
     }
 
     setSavedMessage("Tots els pronòstics completats s'han desat correctament.");
+    localStorage.removeItem(`porra_draft_predictions_${currentUser.id}`);
     loadPublicPredictions();
   }
 
@@ -520,7 +543,6 @@ export default function Home() {
           predictions={predictions}
           predictionsClosed={areGroupStagePredictionsClosed}
           onPredictionChange={updatePrediction}
-          onSavePrediction={savePrediction}
           onSaveAllPredictions={saveAllPredictions}
         />
       )}
