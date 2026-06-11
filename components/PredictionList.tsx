@@ -1,4 +1,5 @@
 import type { Match, Prediction } from "@/types";
+import { flagUrl } from "@/lib/flags";
 
 type PredictionListProps = {
     matches: Match[];
@@ -33,6 +34,14 @@ function formatKickoff(kickoff: string) {
     }).format(new Date(kickoff));
 }
 
+function Flag({ team }: { team: string }) {
+    const url = flagUrl(team);
+
+    if (!url) return null;
+
+    return <img src={url} alt="" className="flag" />;
+}
+
 export function PredictionList({
     matches,
     predictions,
@@ -65,63 +74,72 @@ export function PredictionList({
                 <section key={groupName} className="group-section">
                     <h3>Grup {groupName}</h3>
 
-                    {groupMatches.map((match) => {
-                        const prediction = predictions[match.id];
+                    <div className="matches-grid">
+                        {groupMatches.map((match) => {
+                            const prediction = predictions[match.id];
 
-                        return (
-                            <div key={match.id} className="card">
-                                <div className="card-title">
-                                    <strong>
-                                        {match.home_team} - {match.away_team}
-                                    </strong>
-                                    <span className="badge">Grup {match.group_name}</span>
+                            return (
+                                <div key={match.id} className="card">
+                                    <div className="compact-match">
+                                        <div className="team-left">
+                                            <Flag team={match.home_team} />
+                                            <span>{match.home_team}</span>
+                                        </div>
+
+                                        <div className="score-center">
+                                            <input
+                                                className="score-input"
+                                                type="number"
+                                                min="0"
+                                                disabled={predictionsClosed}
+                                                value={prediction?.predicted_home ?? ""}
+                                                onChange={(e) =>
+                                                    onPredictionChange(
+                                                        match.id,
+                                                        "predicted_home",
+                                                        e.target.value
+                                                    )
+                                                }
+                                            />
+
+                                            <span>-</span>
+
+                                            <input
+                                                className="score-input"
+                                                type="number"
+                                                min="0"
+                                                disabled={predictionsClosed}
+                                                value={prediction?.predicted_away ?? ""}
+                                                onChange={(e) =>
+                                                    onPredictionChange(
+                                                        match.id,
+                                                        "predicted_away",
+                                                        e.target.value
+                                                    )
+                                                }
+                                            />
+                                        </div>
+
+                                        <div className="team-right">
+                                            <Flag team={match.away_team} />
+                                            <span>{match.away_team}</span>
+                                        </div>
+                                    </div>
+
+                                    <div className="match-footer">
+                                        <span>{formatKickoff(match.kickoff)}</span>
+
+                                        <button
+                                            disabled={predictionsClosed}
+                                            onClick={() => onSavePrediction(match.id)}
+                                        >
+                                            Desar
+                                        </button>
+                                    </div>
                                 </div>
-
-                                <div className="muted">{formatKickoff(match.kickoff)}</div>
-
-                                <div className="score-row">
-                                    <input
-                                        className="score-input"
-                                        type="number"
-                                        min="0"
-                                        disabled={predictionsClosed}
-                                        value={prediction?.predicted_home ?? ""}
-                                        onChange={(e) =>
-                                            onPredictionChange(
-                                                match.id,
-                                                "predicted_home",
-                                                e.target.value
-                                            )
-                                        }
-                                    />
-
-                                    <span>-</span>
-
-                                    <input
-                                        className="score-input"
-                                        type="number"
-                                        min="0"
-                                        disabled={predictionsClosed}
-                                        value={prediction?.predicted_away ?? ""}
-                                        onChange={(e) =>
-                                            onPredictionChange(
-                                                match.id,
-                                                "predicted_away",
-                                                e.target.value
-                                            )
-                                        }
-                                    />
-
-                                    <button
-                                        disabled={predictionsClosed}
-                                        onClick={() => onSavePrediction(match.id)}
-                                    >
-                                        Desar
-                                    </button>
-                                </div>
-                            </div>
-                        );
-                    })}
+                            );
+                        })}
+                    </div>
                 </section>
             ))}
         </>

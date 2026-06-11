@@ -1,6 +1,8 @@
 import { useState } from "react";
 import type { PublicPrediction } from "@/types";
 
+import { flagUrl } from "@/lib/flags";
+
 type PublicPredictionsProps = {
     publicPredictions: PublicPrediction[];
 };
@@ -9,6 +11,17 @@ function getSign(home: number, away: number) {
     if (home > away) return "1";
     if (home < away) return "2";
     return "X";
+}
+
+function TeamName({ team }: { team: string }) {
+    const url = flagUrl(team);
+
+    return (
+        <span className="team-name">
+            {url && <img src={url} alt="" className="flag" />}
+            {team}
+        </span>
+    );
 }
 
 function getPredictionPoints(prediction: PublicPrediction) {
@@ -147,9 +160,13 @@ export function PublicPredictions({
                         return (
                             <div key={match?.id} className="card">
                                 <div className="card-title">
-                                    <strong>
-                                        {match?.home_team} - {match?.away_team}
-                                    </strong>
+                                    {match && (
+                                        <>
+                                            <TeamName team={match.home_team} />
+                                            {" - "}
+                                            <TeamName team={match.away_team} />
+                                        </>
+                                    )}
 
                                     {officialResultAvailable ? (
                                         <span className="badge">

@@ -1,0 +1,58 @@
+const countryCodes: Record<string, string> = {
+  Mexico: "mx",
+  "South Africa": "za",
+  "Korea Republic": "kr",
+  Czechia: "cz",
+  Canada: "ca",
+  "Bosnia and Herzegovina": "ba",
+  USA: "us",
+  Paraguay: "py",
+  Haiti: "ht",
+  Scotland: "gb-sct",
+  Australia: "au",
+  Türkiye: "tr",
+  Brazil: "br",
+  Morocco: "ma",
+  Qatar: "qa",
+  Switzerland: "ch",
+  "Côte d'Ivoire": "ci",
+  Ecuador: "ec",
+  Germany: "de",
+  Curaçao: "cw",
+  Netherlands: "nl",
+  Japan: "jp",
+  Sweden: "se",
+  Tunisia: "tn",
+  Uruguay: "uy",
+  Spain: "es",
+  "Saudi Arabia": "sa",
+  "Cabo Verde": "cv",
+  Belgium: "be",
+  Egypt: "eg",
+  "New Zealand": "nz",
+  "IR Iran": "ir",
+  France: "fr",
+  Senegal: "sn",
+  Iraq: "iq",
+  Norway: "no",
+  Argentina: "ar",
+  Algeria: "dz",
+  Austria: "at",
+  Jordan: "jo",
+  England: "gb-eng",
+  Croatia: "hr",
+  Ghana: "gh",
+  Panama: "pa",
+  Portugal: "pt",
+  Colombia: "co",
+  Uzbekistan: "uz",
+  "Congo DR": "cd",
+};
+
+export function flagUrl(team: string) {
+  const code = countryCodes[team];
+
+  if (!code) return null;
+
+  return `https://flagcdn.com/w40/${code}.png`;
+}
