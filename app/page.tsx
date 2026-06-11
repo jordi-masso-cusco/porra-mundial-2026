@@ -21,6 +21,8 @@ export default function Home() {
   >([]);
   const [error, setError] = useState("");
   const [savedMessage, setSavedMessage] = useState("");
+  const groupStagePredictionDeadline = new Date("2026-06-12T21:00:00+02:00");
+  const areGroupStagePredictionsClosed = new Date() >= groupStagePredictionDeadline;
 
   useEffect(() => {
     const savedUser = localStorage.getItem("porra_user");
@@ -132,6 +134,11 @@ export default function Home() {
 
   async function savePrediction(matchId: number) {
     if (!currentUser) return;
+
+    if (areGroupStagePredictionsClosed) {
+      setError("Els pronòstics de la fase de grups estan tancats.");
+      return;
+    }
 
     const prediction = predictions[matchId];
 
@@ -264,6 +271,7 @@ export default function Home() {
         <PredictionList
           matches={matches}
           predictions={predictions}
+          predictionsClosed={areGroupStagePredictionsClosed}
           onPredictionChange={updatePrediction}
           onSavePrediction={savePrediction}
         />
