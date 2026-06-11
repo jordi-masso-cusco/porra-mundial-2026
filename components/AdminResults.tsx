@@ -22,12 +22,7 @@ export function AdminResults({
             {matches.map((match) => (
                 <div
                     key={match.id}
-                    style={{
-                        border: "1px solid #ccc",
-                        padding: "12px",
-                        marginBottom: "12px",
-                        borderRadius: "8px",
-                    }}
+                    className="card"
                 >
                     <strong>
                         {match.home_team} - {match.away_team}

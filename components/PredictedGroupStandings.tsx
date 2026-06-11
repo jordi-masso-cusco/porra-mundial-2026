@@ -90,12 +90,7 @@ export function PredictedGroupStandings({
         return (
           <details
             key={userName}
-            style={{
-              border: "1px solid #ccc",
-              padding: "12px",
-              marginBottom: "12px",
-              borderRadius: "8px",
-            }}
+            className="card"
           >
             <summary style={{ cursor: "pointer" }}>
               <strong>{userName}</strong>

@@ -25,12 +25,7 @@ export function PublicAwards({ publicAwardPredictions }: PublicAwardsProps) {
       {publicAwardPredictions.map((prediction, index) => (
         <div
           key={index}
-          style={{
-            border: "1px solid #ccc",
-            padding: "12px",
-            marginBottom: "12px",
-            borderRadius: "8px",
-          }}
+          className="card"
         >
           <strong>{prediction.users?.name}</strong>
 

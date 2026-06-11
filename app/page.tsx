@@ -410,13 +410,14 @@ export default function Home() {
   }
 
   return (
-    <main style={{ padding: "24px" }}>
-      <h1>Porra Mundial 2026</h1>
-
-      <p>
-        Has entrat com <strong>{currentUser.name}</strong>
-        {currentUser.is_admin ? " · Administrador" : ""}
-      </p>
+    <main className="page">
+      <div className="header">
+        <h1>Porra Mundial 2026</h1>
+        <p>
+          Has entrat com <strong>{currentUser.name}</strong>
+          {currentUser.is_admin ? " · Administrador" : ""}
+        </p>
+      </div>
 
       <button onClick={logout} style={{ marginBottom: "24px" }}>
         Sortir
@@ -428,8 +429,8 @@ export default function Home() {
         onTabChange={setTab}
       />
 
-      {error && <p style={{ color: "red" }}>{error}</p>}
-      {savedMessage && <p style={{ color: "green" }}>{savedMessage}</p>}
+      {error && <p className="error">{error}</p>}
+      {savedMessage && <p className="success">{savedMessage}</p>}
 
       {tab === "mine" && (
         <PredictionList

@@ -36,12 +36,7 @@ export function AwardPredictions({
         return (
           <div
             key={award.key}
-            style={{
-              border: "1px solid #ccc",
-              padding: "12px",
-              marginBottom: "12px",
-              borderRadius: "8px",
-            }}
+            className="card"
           >
             <strong>{award.label}</strong>
             <div style={{ marginBottom: "8px" }}>{award.points} punts</div>
