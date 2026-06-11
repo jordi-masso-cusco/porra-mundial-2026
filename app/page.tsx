@@ -18,6 +18,7 @@ import type {
   Tab,
   User,
 } from "@/types";
+import { PublicAwards } from "@/components/PublicAwards";
 import { supabase } from "@/lib/supabase";
 
 export default function Home() {
@@ -385,6 +386,10 @@ export default function Home() {
           onAwardChange={updateAwardPrediction}
           onSaveAward={saveAwardPrediction}
         />
+      )}
+
+      {tab === "publicAwards" && (
+        <PublicAwards publicAwardPredictions={publicAwardPredictions} />
       )}
 
       {tab === "groups" && (
