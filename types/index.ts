@@ -38,6 +38,11 @@ export type PublicAwardPrediction = {
     users: { name: string } | null;
 };
 
+export type AwardResult = {
+  award_key: string;
+  player_name: string;
+};
+
 export type Tab =
     | "mine"
     | "awards"

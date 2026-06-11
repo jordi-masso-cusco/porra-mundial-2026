@@ -19,6 +19,7 @@ import type {
   User,
 } from "@/types";
 import { PublicAwards } from "@/components/PublicAwards";
+import { AdminAwards } from "@/components/AdminAwards";
 import { supabase } from "@/lib/supabase";
 
 export default function Home() {
@@ -41,6 +42,7 @@ export default function Home() {
   const [publicAwardPredictions, setPublicAwardPredictions] = useState<
     PublicAwardPrediction[]
   >([]);
+  const [awardResults, setAwardResults] = useState<Record<string, AwardResult>>({});
 
   useEffect(() => {
     const savedUser = localStorage.getItem("porra_user");
@@ -53,6 +55,7 @@ export default function Home() {
       loadPublicPredictions();
       loadAwardPredictions(currentUser.id);
       loadPublicAwardPredictions();
+      loadAwardResults();
     }
   }, [currentUser]);
 
@@ -335,6 +338,63 @@ export default function Home() {
     loadPublicAwardPredictions();
   }
 
+  async function loadAwardResults() {
+    const { data, error } = await supabase
+      .from("award_results")
+      .select("award_key, player_name");
+
+    if (error) {
+      setError("No s'han pogut carregar els resultats dels premis.");
+      return;
+    }
+
+    const resultsByAward: Record<string, AwardResult> = {};
+
+    for (const result of data || []) {
+      resultsByAward[result.award_key] = result;
+    }
+
+    setAwardResults(resultsByAward);
+  }
+
+  function updateAwardResult(awardKey: string, value: string) {
+    setAwardResults((current) => ({
+      ...current,
+      [awardKey]: {
+        award_key: awardKey,
+        player_name: value,
+      },
+    }));
+  }
+
+  async function saveAwardResult(awardKey: string) {
+    const result = awardResults[awardKey];
+
+    if (!result || result.player_name.trim() === "") {
+      setError("Has d'escriure el nom del jugador abans de desar.");
+      return;
+    }
+
+    setError("");
+    setSavedMessage("");
+
+    const { error } = await supabase.from("award_results").upsert(
+      {
+        award_key: awardKey,
+        player_name: result.player_name.trim(),
+        updated_at: new Date().toISOString(),
+      },
+      { onConflict: "award_key" }
+    );
+
+    if (error) {
+      setError("No s'ha pogut desar el resultat del premi.");
+      return;
+    }
+
+    setSavedMessage("Resultat del premi desat correctament.");
+  }
+
   if (!currentUser) {
     return (
       <LoginForm
@@ -408,11 +468,19 @@ export default function Home() {
       )}
 
       {tab === "admin" && currentUser.is_admin && (
-        <AdminResults
-          matches={matches}
-          onResultChange={updateOfficialResult}
-          onSaveResult={saveOfficialResult}
-        />
+        <>
+          <AdminResults
+            matches={matches}
+            onResultChange={updateOfficialResult}
+            onSaveResult={saveOfficialResult}
+          />
+
+          <AdminAwards
+            results={awardResults}
+            onResultChange={updateAwardResult}
+            onSaveResult={saveAwardResult}
+          />
+        </>
       )}
     </main>
   );
