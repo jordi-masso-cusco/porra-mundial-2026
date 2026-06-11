@@ -5,9 +5,10 @@ import { LoginForm } from "@/components/LoginForm";
 import { Navigation } from "@/components/Navigation";
 import { PredictionList } from "@/components/PredictionList";
 import { PublicPredictions } from "@/components/PublicPredictions";
+import { AdminResults } from "@/components/AdminResults";
+import { Standings } from "@/components/Standings";
 import { supabase } from "@/lib/supabase";
 import type { Match, Prediction, PublicPrediction, Tab, User } from "@/types";
-import { AdminResults } from "@/components/AdminResults";
 
 export default function Home() {
   const [tab, setTab] = useState<Tab>("mine");
@@ -282,10 +283,7 @@ export default function Home() {
       )}
 
       {tab === "standings" && (
-        <>
-          <h2>Classificació</h2>
-          <p>La classificació la calcularem quan definim resultats reals i punts.</p>
-        </>
+        <Standings matches={matches} publicPredictions={publicPredictions} />
       )}
 
       {tab === "admin" && currentUser.is_admin && (
