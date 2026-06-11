@@ -8,8 +8,17 @@ import { PublicPredictions } from "@/components/PublicPredictions";
 import { AdminResults } from "@/components/AdminResults";
 import { Standings } from "@/components/Standings";
 import { PredictedGroupStandings } from "@/components/PredictedGroupStandings";
+import { AwardPredictions } from "@/components/AwardPredictions";
+import type {
+  AwardPrediction,
+  Match,
+  Prediction,
+  PublicAwardPrediction,
+  PublicPrediction,
+  Tab,
+  User,
+} from "@/types";
 import { supabase } from "@/lib/supabase";
-import type { Match, Prediction, PublicPrediction, Tab, User } from "@/types";
 
 export default function Home() {
   const [tab, setTab] = useState<Tab>("mine");
@@ -25,6 +34,12 @@ export default function Home() {
   const [savedMessage, setSavedMessage] = useState("");
   const groupStagePredictionDeadline = new Date("2026-06-12T21:00:00+02:00");
   const areGroupStagePredictionsClosed = new Date() >= groupStagePredictionDeadline;
+  const [awardPredictions, setAwardPredictions] = useState<
+    Record<string, AwardPrediction>
+  >({});
+  const [publicAwardPredictions, setPublicAwardPredictions] = useState<
+    PublicAwardPrediction[]
+  >([]);
 
   useEffect(() => {
     const savedUser = localStorage.getItem("porra_user");
@@ -35,6 +50,8 @@ export default function Home() {
     if (currentUser) {
       loadData(currentUser.id);
       loadPublicPredictions();
+      loadAwardPredictions(currentUser.id);
+      loadPublicAwardPredictions();
     }
   }, [currentUser]);
 
@@ -184,6 +201,8 @@ export default function Home() {
     setPredictions({});
     setPublicPredictions([]);
     setTab("mine");
+    setAwardPredictions({});
+    setPublicAwardPredictions([]);
   }
 
   function updateOfficialResult(
@@ -234,6 +253,87 @@ export default function Home() {
     setSavedMessage("Resultat oficial desat correctament.");
   }
 
+  async function loadAwardPredictions(userId: string) {
+    const { data, error } = await supabase
+      .from("award_predictions")
+      .select("award_key, player_name")
+      .eq("user_id", userId);
+
+    if (error) {
+      setError("No s'han pogut carregar els premis individuals.");
+      return;
+    }
+
+    const predictionsByAward: Record<string, AwardPrediction> = {};
+
+    for (const prediction of data || []) {
+      predictionsByAward[prediction.award_key] = prediction;
+    }
+
+    setAwardPredictions(predictionsByAward);
+  }
+
+  async function loadPublicAwardPredictions() {
+    const { data, error } = await supabase.from("award_predictions").select(`
+    award_key,
+    player_name,
+    users (
+      name
+    )
+  `);
+
+    if (error) {
+      setError("No s'han pogut carregar les prediccions de premis.");
+      return;
+    }
+
+    setPublicAwardPredictions(
+      (data ?? []) as unknown as PublicAwardPrediction[]
+    );
+  }
+
+  function updateAwardPrediction(awardKey: string, value: string) {
+    setAwardPredictions((current) => ({
+      ...current,
+      [awardKey]: {
+        award_key: awardKey,
+        player_name: value,
+      },
+    }));
+  }
+
+  async function saveAwardPrediction(awardKey: string) {
+    if (!currentUser) return;
+
+    const prediction = awardPredictions[awardKey];
+
+    if (!prediction || prediction.player_name.trim() === "") {
+      setError("Has d'escriure el nom del jugador abans de desar.");
+      return;
+    }
+
+    setError("");
+    setSavedMessage("");
+
+    const { error } = await supabase.from("award_predictions").upsert(
+      {
+        user_id: currentUser.id,
+        award_key: awardKey,
+        player_name: prediction.player_name.trim(),
+        updated_at: new Date().toISOString(),
+      },
+      { onConflict: "user_id,award_key" }
+    );
+
+    if (error) {
+      setError("No s'ha pogut desar el premi individual.");
+      return;
+    }
+
+    setSavedMessage("Premi individual desat correctament.");
+    loadPublicAwardPredictions();
+  }
+
   if (!currentUser) {
     return (
       <LoginForm
@@ -276,6 +376,14 @@ export default function Home() {
           predictionsClosed={areGroupStagePredictionsClosed}
           onPredictionChange={updatePrediction}
           onSavePrediction={savePrediction}
+        />
+      )}
+
+      {tab === "awards" && (
+        <AwardPredictions
+          predictions={awardPredictions}
+          onAwardChange={updateAwardPrediction}
+          onSaveAward={saveAwardPrediction}
         />
       )}
 

@@ -27,4 +27,15 @@ export type PublicPrediction = {
   matches: Match | null;
 };
 
-export type Tab = "mine" | "groups" | "others" | "standings" | "admin";
+export type AwardPrediction = {
+  award_key: string;
+  player_name: string;
+};
+
+export type PublicAwardPrediction = {
+  award_key: string;
+  player_name: string;
+  users: { name: string } | null;
+};
+
+export type Tab = "mine" | "awards" | "groups" | "others" | "standings" | "admin";
