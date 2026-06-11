@@ -18,7 +18,7 @@ const tabs: {
         { key: "others", label: "Porres", publicOnlyAfterClose: true },
         { key: "groups", label: "Grups", publicOnlyAfterClose: true },
         { key: "publicAwards", label: "Premis dels altres", publicOnlyAfterClose: true },
-        { key: "standings", label: "Classificació", publicOnlyAfterClose: true },
+        { key: "standings", label: "Classificació" },
         { key: "admin", label: "Admin", adminOnly: true },
     ];
 

@@ -191,44 +191,73 @@ export function Standings({
                 <p>Encara no hi ha punts perquè falten resultats oficials.</p>
             )}
 
-            {rows.map((row, index) => (
-                <details key={row.userName} className="card">
-                    <summary
-                        style={{
-                            display: "flex",
-                            justifyContent: "space-between",
-                            cursor: "pointer",
-                            alignItems: "center",
-                        }}
-                    >
-                        <strong>
-                            {index + 1}. {row.userName}
-                        </strong>
+            {rows.length > 0 && (
+                <>
+                    <div className="standings-grid">
+                        {[rows.slice(0, Math.ceil(rows.length / 2)), rows.slice(Math.ceil(rows.length / 2))].map(
+                            (columnRows, columnIndex) => (
+                                <div key={columnIndex} className="standings-card">
+                                    <div className="standings-header-row">
+                                        <span>#</span>
+                                        <span>Participant</span>
+                                        <span>Punts</span>
+                                        <span></span>
+                                    </div>
 
-                        <span className="badge">{row.points} punts</span>
-                    </summary>
+                                    {columnRows.map((row, rowIndex) => {
+                                        const absoluteIndex =
+                                            columnIndex === 0
+                                                ? rowIndex
+                                                : rowIndex + Math.ceil(rows.length / 2);
 
-                    <div style={{ marginTop: "12px" }}>
-                        {row.details.map((detail, detailIndex) => (
-                            <div
-                                key={detailIndex}
-                                style={{
-                                    borderTop: "1px solid #eee",
-                                    paddingTop: "8px",
-                                    marginTop: "8px",
-                                }}
-                            >
-                                <strong>{detail.matchName}</strong>
-                                <div className="muted">Pronòstic: {detail.prediction}</div>
-                                <div className="muted">Resultat: {detail.result}</div>
-                                <div>
-                                    <strong>{detail.points} punts</strong> · {detail.reason}
+                                        return (
+                                            <details key={row.userName} className="standings-row">
+                                                <summary className="standings-summary">
+                                                    <span className="standings-position">
+                                                        {absoluteIndex + 1}
+                                                    </span>
+
+                                                    <strong className="standings-name">
+                                                        {row.userName}
+                                                    </strong>
+
+                                                    <span className="badge">{row.points} punts</span>
+
+                                                    <span className="standings-chevron">⌄</span>
+                                                </summary>
+
+                                                <div className="standings-details">
+                                                    {row.details.map((detail, detailIndex) => (
+                                                        <div
+                                                            key={detailIndex}
+                                                            className="standings-detail-row"
+                                                        >
+                                                            <strong>{detail.matchName}</strong>
+                                                            <span className="muted">
+                                                                Pronòstic: {detail.prediction}
+                                                            </span>
+                                                            <span className="muted">
+                                                                Resultat: {detail.result}
+                                                            </span>
+                                                            <span>
+                                                                <strong>{detail.points}</strong> · {detail.reason}
+                                                            </span>
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            </details>
+                                        );
+                                    })}
                                 </div>
-                            </div>
-                        ))}
+                            )
+                        )}
                     </div>
-                </details>
-            ))}
+
+                    <p className="muted" style={{ textAlign: "center", marginTop: "16px" }}>
+                        Fes clic a cada participant per veure el detall dels punts.
+                    </p>
+                </>
+            )}
         </>
     );
 }
