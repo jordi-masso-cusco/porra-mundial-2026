@@ -7,6 +7,7 @@ import { PredictionList } from "@/components/PredictionList";
 import { PublicPredictions } from "@/components/PublicPredictions";
 import { AdminResults } from "@/components/AdminResults";
 import { Standings } from "@/components/Standings";
+import { PredictedGroupStandings } from "@/components/PredictedGroupStandings";
 import { supabase } from "@/lib/supabase";
 import type { Match, Prediction, PublicPrediction, Tab, User } from "@/types";
 
@@ -275,6 +276,13 @@ export default function Home() {
           predictionsClosed={areGroupStagePredictionsClosed}
           onPredictionChange={updatePrediction}
           onSavePrediction={savePrediction}
+        />
+      )}
+
+      {tab === "groups" && (
+        <PredictedGroupStandings
+          matches={matches}
+          publicPredictions={publicPredictions}
         />
       )}
 

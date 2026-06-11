@@ -18,6 +18,10 @@ export function Navigation({ activeTab, isAdmin, onTabChange }: NavigationProps)
                 Els meus pronòstics
             </button>
 
+            <button style={buttonStyle("groups")} onClick={() => onTabChange("groups")}>
+                Grups calculats
+            </button>
+
             <button style={buttonStyle("others")} onClick={() => onTabChange("others")}>
                 Porres dels altres
             </button>

@@ -27,4 +27,4 @@ export type PublicPrediction = {
   matches: Match | null;
 };
 
-export type Tab = "mine" | "others" | "standings" | "admin";
+export type Tab = "mine" | "groups" | "others" | "standings" | "admin";
