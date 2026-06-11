@@ -5,10 +5,6 @@ type PublicPredictionsProps = {
     publicPredictions: PublicPrediction[];
 };
 
-function getMatchKey(prediction: PublicPrediction) {
-    return prediction.matches?.id ?? 0;
-}
-
 function getSign(home: number, away: number) {
     if (home > away) return "1";
     if (home < away) return "2";
@@ -19,7 +15,16 @@ function getPredictionPoints(prediction: PublicPrediction) {
     const match = prediction.matches;
 
     if (!match) return null;
-    if (match.home_score === null || match.away_score === null) return null;
+
+    if (
+        match.home_score === null ||
+        match.home_score === undefined ||
+        match.away_score === null ||
+        match.away_score === undefined
+    ) {
+        return null;
+    }
+
     if (
         prediction.predicted_home === null ||
         prediction.predicted_away === null
@@ -38,6 +43,38 @@ function getPredictionPoints(prediction: PublicPrediction) {
         getSign(match.home_score, match.away_score);
 
     return signCorrect ? 5 : 0;
+}
+
+function hasOfficialResult(prediction: PublicPrediction) {
+    const match = prediction.matches;
+
+    return (
+        match?.home_score !== null &&
+        match?.home_score !== undefined &&
+        match?.away_score !== null &&
+        match?.away_score !== undefined
+    );
+}
+
+function groupPredictionsByGroupAndMatch(predictions: PublicPrediction[]) {
+    const groups: Record<string, Record<number, PublicPrediction[]>> = {};
+
+    for (const prediction of predictions) {
+        const groupName = prediction.matches?.group_name ?? "Sense grup";
+        const matchId = prediction.matches?.id ?? 0;
+
+        if (!groups[groupName]) {
+            groups[groupName] = {};
+        }
+
+        if (!groups[groupName][matchId]) {
+            groups[groupName][matchId] = [];
+        }
+
+        groups[groupName][matchId].push(prediction);
+    }
+
+    return groups;
 }
 
 export function PublicPredictions({
@@ -60,18 +97,8 @@ export function PublicPredictions({
                 (prediction) => prediction.users?.name === selectedUser
             );
 
-    const predictionsByMatch = filteredPredictions.reduce<
-        Record<number, PublicPrediction[]>
-    >((groups, prediction) => {
-        const matchKey = getMatchKey(prediction);
-
-        if (!groups[matchKey]) {
-            groups[matchKey] = [];
-        }
-
-        groups[matchKey].push(prediction);
-        return groups;
-    }, {});
+    const groupedPredictions =
+        groupPredictionsByGroupAndMatch(filteredPredictions);
 
     return (
         <>
@@ -107,47 +134,66 @@ export function PublicPredictions({
                 </div>
             )}
 
-            {Object.values(predictionsByMatch).map((matchPredictions) => {
-                const match = matchPredictions[0]?.matches;
+            {Object.entries(groupedPredictions).map(([groupName, matches]) => (
+                <section key={groupName} className="group-section">
+                    <h3>Grup {groupName}</h3>
 
-                return (
-                    <div key={match?.id} className="card">
-                        <div className="card-title">
-                            <strong>
-                                {match?.home_team} - {match?.away_team}
-                            </strong>
-                            <span className="badge">Grup {match?.group_name}</span>
-                        </div>
+                    {Object.values(matches).map((matchPredictions) => {
+                        const match = matchPredictions[0]?.matches;
+                        const officialResultAvailable = hasOfficialResult(
+                            matchPredictions[0]
+                        );
 
-                        {matchPredictions.map((prediction, index) => {
-                            const points = getPredictionPoints(prediction);
-
-                            return (
-                                <div
-                                    key={index}
-                                    style={{
-                                        display: "grid",
-                                        gridTemplateColumns: "1fr auto auto",
-                                        gap: "12px",
-                                        alignItems: "center",
-                                        borderTop: index === 0 ? "0" : "1px solid #eee",
-                                        paddingTop: index === 0 ? "0" : "8px",
-                                        marginTop: index === 0 ? "8px" : "8px",
-                                    }}
-                                >
-                                    <span>{prediction.users?.name}</span>
-
+                        return (
+                            <div key={match?.id} className="card">
+                                <div className="card-title">
                                     <strong>
-                                        {prediction.predicted_home} - {prediction.predicted_away}
+                                        {match?.home_team} - {match?.away_team}
                                     </strong>
 
-                                    {points !== null && <span className="badge">+{points}</span>}
+                                    {officialResultAvailable ? (
+                                        <span className="badge">
+                                            Resultat {match?.home_score} - {match?.away_score}
+                                        </span>
+                                    ) : (
+                                        <span className="badge">Pendent</span>
+                                    )}
                                 </div>
-                            );
-                        })}
-                    </div>
-                );
-            })}
+
+                                {matchPredictions.map((prediction, index) => {
+                                    const points = getPredictionPoints(prediction);
+
+                                    return (
+                                        <div
+                                            key={index}
+                                            style={{
+                                                display: "grid",
+                                                gridTemplateColumns: "1fr auto auto",
+                                                gap: "12px",
+                                                alignItems: "center",
+                                                borderTop: index === 0 ? "0" : "1px solid #eee",
+                                                paddingTop: index === 0 ? "0" : "8px",
+                                                marginTop: index === 0 ? "8px" : "8px",
+                                            }}
+                                        >
+                                            <span>{prediction.users?.name}</span>
+
+                                            <strong>
+                                                {prediction.predicted_home} -{" "}
+                                                {prediction.predicted_away}
+                                            </strong>
+
+                                            {points !== null && (
+                                                <span className="badge">+{points}</span>
+                                            )}
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                        );
+                    })}
+                </section>
+            ))}
         </>
     );
 }
