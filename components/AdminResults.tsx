@@ -1,5 +1,6 @@
 import type { Match } from "@/types";
 import { flagUrl } from "@/lib/flags";
+import { calculateRealGroupStandings } from "@/lib/groupStandings";
 
 type AdminResultsProps = {
     matches: Match[];
@@ -28,6 +29,15 @@ function Flag({ team }: { team: string }) {
     return <img src={url} alt="" className="flag" />;
 }
 
+function TeamName({ team }: { team: string }) {
+    return (
+        <span className="team-name">
+            <Flag team={team} />
+            {team}
+        </span>
+    );
+}
+
 function groupMatchesByGroup(matches: Match[]) {
     return matches.reduce<Record<string, Match[]>>((groups, match) => {
         if (!groups[match.group_name]) {
@@ -45,66 +55,112 @@ export function AdminResults({
     onSaveResult,
 }: AdminResultsProps) {
     const matchesByGroup = groupMatchesByGroup(matches);
+    const realGroupStandings = calculateRealGroupStandings(matches);
 
     return (
         <>
             <h2>Resultats oficials</h2>
 
-            {Object.entries(matchesByGroup).map(([groupName, groupMatches]) => (
-                <section key={groupName} className="group-section">
-                    <h3>Grup {groupName}</h3>
+            {Object.entries(matchesByGroup)
+                .sort(([groupA], [groupB]) => groupA.localeCompare(groupB))
+                .map(([groupName, groupMatches]) => {
+                    const standingsRows = realGroupStandings[groupName] ?? [];
 
-                    <div className="matches-grid">
-                        {groupMatches.map((match) => (
-                            <div key={match.id} className="card">
-                                <div className="compact-match">
-                                    <div className="team-left">
-                                        <Flag team={match.home_team} />
-                                        <span>{match.home_team}</span>
+                    return (
+                        <section key={groupName} className="group-section">
+                            <h3>Grup {groupName}</h3>
+
+                            <div className="matches-grid">
+                                {groupMatches.map((match) => (
+                                    <div key={match.id} className="card">
+                                        <div className="compact-match">
+                                            <div className="team-left">
+                                                <Flag team={match.home_team} />
+                                                <span>{match.home_team}</span>
+                                            </div>
+
+                                            <div className="score-center">
+                                                <input
+                                                    className="score-input"
+                                                    type="number"
+                                                    min="0"
+                                                    value={match.home_score ?? ""}
+                                                    onChange={(e) =>
+                                                        onResultChange(
+                                                            match.id,
+                                                            "home_score",
+                                                            e.target.value
+                                                        )
+                                                    }
+                                                />
+
+                                                <span>-</span>
+
+                                                <input
+                                                    className="score-input"
+                                                    type="number"
+                                                    min="0"
+                                                    value={match.away_score ?? ""}
+                                                    onChange={(e) =>
+                                                        onResultChange(
+                                                            match.id,
+                                                            "away_score",
+                                                            e.target.value
+                                                        )
+                                                    }
+                                                />
+                                            </div>
+
+                                            <div className="team-right">
+                                                <Flag team={match.away_team} />
+                                                <span>{match.away_team}</span>
+                                            </div>
+                                        </div>
+
+                                        <div className="match-footer">
+                                            <span>{formatKickoff(match.kickoff)}</span>
+
+                                            <button onClick={() => onSaveResult(match.id)}>
+                                                Desar resultat
+                                            </button>
+                                        </div>
                                     </div>
-
-                                    <div className="score-center">
-                                        <input
-                                            className="score-input"
-                                            type="number"
-                                            min="0"
-                                            value={match.home_score ?? ""}
-                                            onChange={(e) =>
-                                                onResultChange(match.id, "home_score", e.target.value)
-                                            }
-                                        />
-
-                                        <span>-</span>
-
-                                        <input
-                                            className="score-input"
-                                            type="number"
-                                            min="0"
-                                            value={match.away_score ?? ""}
-                                            onChange={(e) =>
-                                                onResultChange(match.id, "away_score", e.target.value)
-                                            }
-                                        />
-                                    </div>
-
-                                    <div className="team-right">
-                                        <Flag team={match.away_team} />
-                                        <span>{match.away_team}</span>
-                                    </div>
-                                </div>
-
-                                <div className="match-footer">
-                                    <span>{formatKickoff(match.kickoff)}</span>
-
-                                    <button onClick={() => onSaveResult(match.id)}>
-                                        Desar resultat
-                                    </button>
-                                </div>
+                                ))}
                             </div>
-                        ))}
-                    </div>
-                </section>
-            ))}
+
+                            <div className="card">
+                                <h4 style={{ marginTop: 0 }}>Classificació real</h4>
+
+                                {standingsRows.length === 0 && (
+                                    <p className="muted">
+                                        Encara no hi ha resultats oficials en aquest grup.
+                                    </p>
+                                )}
+
+                                {standingsRows.map((row, index) => (
+                                    <div
+                                        key={row.team}
+                                        style={{
+                                            display: "grid",
+                                            gridTemplateColumns: "32px 1fr 60px 60px 60px 60px",
+                                            gap: "8px",
+                                            padding: "6px 0",
+                                            borderTop: index === 0 ? "0" : "1px solid #eee",
+                                            alignItems: "center",
+                                        }}
+                                    >
+                                        <strong>{index + 1}</strong>
+                                        <TeamName team={row.team} />
+                                        <span>{row.points} pts</span>
+                                        <span>GF {row.goalsFor}</span>
+                                        <span>GC {row.goalsAgainst}</span>
+                                        <span>DG {row.goalDifference}</span>
+                                    </div>
+                                ))}
+                            </div>
+                        </section>
+                    );
+                })}
         </>
     );
 }
