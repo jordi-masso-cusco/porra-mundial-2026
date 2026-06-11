@@ -1,4 +1,4 @@
-import type { Match, PublicPrediction } from "@/types";
+import type { AwardResult, Match, PublicAwardPrediction, PublicPrediction } from "@/types";
 
 import {
     calculatePredictedGroupStandings,
@@ -22,6 +22,26 @@ type StandingRow = {
 type StandingsProps = {
     matches: Match[];
     publicPredictions: PublicPrediction[];
+    publicAwardPredictions: PublicAwardPrediction[];
+    awardResults: Record<string, AwardResult>;
+};
+
+const awardPoints: Record<string, number> = {
+    golden_boot_1: 50,
+    golden_boot_2: 25,
+    golden_boot_3: 10,
+    golden_ball_1: 50,
+    golden_ball_2: 25,
+    golden_ball_3: 10,
+};
+
+const awardLabels: Record<string, string> = {
+    golden_boot_1: "Bota d'Or",
+    golden_boot_2: "Bota de Plata",
+    golden_boot_3: "Bota de Bronze",
+    golden_ball_1: "Pilota d'Or",
+    golden_ball_2: "Pilota de Plata",
+    golden_ball_3: "Pilota de Bronze",
 };
 
 function getSign(home: number, away: number) {
@@ -30,7 +50,12 @@ function getSign(home: number, away: number) {
     return "X";
 }
 
-export function Standings({ matches, publicPredictions }: StandingsProps) {
+export function Standings({
+    matches,
+    publicPredictions,
+    publicAwardPredictions,
+    awardResults,
+}: StandingsProps) {
     const standings: Record<string, StandingRow> = {};
 
     for (const prediction of publicPredictions) {
@@ -121,6 +146,38 @@ export function Standings({ matches, publicPredictions }: StandingsProps) {
                     reason: "Posició exacta de grup",
                 });
             }
+        }
+    }
+
+    for (const awardPrediction of publicAwardPredictions) {
+        const userName = awardPrediction.users?.name;
+        if (!userName) continue;
+
+        const result = awardResults[awardPrediction.award_key];
+        if (!result) continue;
+
+        if (!standings[userName]) {
+            standings[userName] = {
+                userName,
+                points: 0,
+                details: [],
+            };
+        }
+
+        const predictedPlayer = awardPrediction.player_name.trim().toLowerCase();
+        const realPlayer = result.player_name.trim().toLowerCase();
+
+        if (predictedPlayer === realPlayer) {
+            const points = awardPoints[awardPrediction.award_key] ?? 0;
+
+            standings[userName].points += points;
+            standings[userName].details.push({
+                matchName: awardLabels[awardPrediction.award_key] ?? awardPrediction.award_key,
+                prediction: awardPrediction.player_name,
+                result: result.player_name,
+                points,
+                reason: "Premi individual correcte",
+            });
         }
     }
 

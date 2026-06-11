@@ -11,6 +11,7 @@ import { PredictedGroupStandings } from "@/components/PredictedGroupStandings";
 import { AwardPredictions } from "@/components/AwardPredictions";
 import type {
   AwardPrediction,
+  AwardResult,
   Match,
   Prediction,
   PublicAwardPrediction,
@@ -464,7 +465,12 @@ export default function Home() {
       )}
 
       {tab === "standings" && (
-        <Standings matches={matches} publicPredictions={publicPredictions} />
+        <Standings
+          matches={matches}
+          publicPredictions={publicPredictions}
+          publicAwardPredictions={publicAwardPredictions}
+          awardResults={awardResults}
+        />
       )}
 
       {tab === "admin" && currentUser.is_admin && (
