@@ -35,7 +35,7 @@ export default function Home() {
   >([]);
   const [error, setError] = useState("");
   const [savedMessage, setSavedMessage] = useState("");
-  const groupStagePredictionDeadline = new Date("2026-06-12T21:00:00+02:00");
+  const groupStagePredictionDeadline = new Date("2026-06-12T17:00:00+02:00");
   const areGroupStagePredictionsClosed = new Date() >= groupStagePredictionDeadline;
   const [awardPredictions, setAwardPredictions] = useState<
     Record<string, AwardPrediction>
