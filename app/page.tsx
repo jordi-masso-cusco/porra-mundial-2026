@@ -398,6 +398,48 @@ export default function Home() {
     setSavedMessage("Resultat del premi desat correctament.");
   }
 
+  async function saveAllPredictions() {
+    if (!currentUser) return;
+
+    if (areGroupStagePredictionsClosed) {
+      setError("Els pronòstics de la fase de grups estan tancats.");
+      return;
+    }
+
+    const completedPredictions = Object.values(predictions).filter(
+      (prediction) =>
+        prediction.predicted_home !== null && prediction.predicted_away !== null
+    );
+
+    if (completedPredictions.length === 0) {
+      setError("No hi ha cap pronòstic complet per desar.");
+      return;
+    }
+
+    setError("");
+    setSavedMessage("");
+
+    const rows = completedPredictions.map((prediction) => ({
+      user_id: currentUser.id,
+      match_id: prediction.match_id,
+      predicted_home: prediction.predicted_home,
+      predicted_away: prediction.predicted_away,
+      updated_at: new Date().toISOString(),
+    }));
+
+    const { error } = await supabase.from("predictions").upsert(rows, {
+      onConflict: "user_id,match_id",
+    });
+
+    if (error) {
+      setError("No s'han pogut desar tots els pronòstics.");
+      return;
+    }
+
+    setSavedMessage("Tots els pronòstics completats s'han desat correctament.");
+    loadPublicPredictions();
+  }
+
   if (!currentUser) {
     return (
       <LoginForm
@@ -441,6 +483,7 @@ export default function Home() {
           predictionsClosed={areGroupStagePredictionsClosed}
           onPredictionChange={updatePrediction}
           onSavePrediction={savePrediction}
+          onSaveAllPredictions={saveAllPredictions}
         />
       )}
 
@@ -453,7 +496,10 @@ export default function Home() {
       )}
 
       {tab === "publicAwards" && (
-        <PublicAwards publicAwardPredictions={publicAwardPredictions} />
+        <PublicAwards
+          publicAwardPredictions={publicAwardPredictions}
+          awardResults={awardResults}
+        />
       )}
 
       {tab === "groups" && (

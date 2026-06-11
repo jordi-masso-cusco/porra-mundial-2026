@@ -10,6 +10,7 @@ type PredictionListProps = {
         value: string
     ) => void;
     onSavePrediction: (matchId: number) => void;
+    onSaveAllPredictions: () => void;
 };
 
 function groupMatchesByGroup(matches: Match[]) {
@@ -38,6 +39,7 @@ export function PredictionList({
     predictionsClosed,
     onPredictionChange,
     onSavePrediction,
+    onSaveAllPredictions,
 }: PredictionListProps) {
     const matchesByGroup = groupMatchesByGroup(matches);
 
@@ -50,6 +52,14 @@ export function PredictionList({
                     Els pronòstics de la fase de grups estan tancats.
                 </p>
             )}
+
+            <button
+                disabled={predictionsClosed}
+                onClick={onSaveAllPredictions}
+                style={{ marginBottom: "16px" }}
+            >
+                Desar tots els pronòstics
+            </button>
 
             {Object.entries(matchesByGroup).map(([groupName, groupMatches]) => (
                 <section key={groupName} className="group-section">
