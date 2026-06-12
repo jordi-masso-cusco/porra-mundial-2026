@@ -242,32 +242,30 @@ export function PredictionList({
                                 })}
                             </div>
 
-                            <div className="card">
+                            <div className="card predicted-standings-card">
                                 <h4 style={{ marginTop: 0 }}>Classificació pronosticada</h4>
 
                                 {standingsRows.map((row, index) => (
                                     <div
                                         key={row.team}
-                                        className={qualifiedTeams.has(row.team) ? "qualified-row" : "eliminated-row"}
-                                        style={{
-                                            display: "grid",
-                                            gridTemplateColumns: "32px 1fr 60px 60px 60px 60px",
-                                            gap: "8px",
-                                            padding: "6px 0",
-                                            borderTop: index === 0 ? "0" : "1px solid #eee",
-                                            alignItems: "center",
-                                        }}
+                                        className={
+                                            qualifiedTeams.has(row.team)
+                                                ? "predicted-standing-row qualified-row"
+                                                : "predicted-standing-row eliminated-row"
+                                        }
                                     >
-                                        <strong>{index + 1}</strong>
+                                        <span className="predicted-standing-position">{index + 1}</span>
+
                                         <TeamName team={row.team} />
-                                        <span>{row.points} pts</span>
-                                        <span>GF {row.goalsFor}</span>
-                                        <span>GC {row.goalsAgainst}</span>
-                                        <span>DG {row.goalDifference}</span>
+
+                                        <span className="predicted-standing-points">{row.points} pts</span>
+
+                                        <span className="predicted-standing-dg">
+                                            DG {row.goalDifference}
+                                        </span>
                                     </div>
                                 ))}
-                            </div>
-                        </section>
+                            </div>                        </section>
                     );
                 })}
         </>
