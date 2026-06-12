@@ -564,10 +564,14 @@ export default function Home() {
         </p>
       </div>
 
-      <div className="top-actions">
+      <div>
         <button className="logout-button" onClick={logout}>
           Sortir
         </button>
+
+      </div>
+
+      <div className="top-actions">
 
         <select
           value={selectedGroup ?? "ALL"}
