@@ -114,6 +114,17 @@ export function Standings({
 
     const realGroupStandings = calculateRealGroupStandings(matches);
 
+    function isGroupCompleted(groupName: string) {
+        const groupMatches = matches.filter((match) => match.group_name === groupName);
+
+        return (
+            groupMatches.length === 6 &&
+            groupMatches.every(
+                (match) => match.home_score !== null && match.away_score !== null
+            )
+        );
+    }
+
     for (const row of Object.values(standings)) {
         const predictedGroupStandings = calculatePredictedGroupStandings(
             matches,
@@ -122,10 +133,14 @@ export function Standings({
         );
 
         for (const [groupName, realRows] of Object.entries(realGroupStandings)) {
+            if (!isGroupCompleted(groupName)) continue;
+
             const predictedRows = predictedGroupStandings[groupName];
 
             if (!predictedRows) continue;
             if (realRows.length < 4 || predictedRows.length < 4) continue;
+
+            let groupPoints = 0;
 
             for (let index = 0; index < realRows.length; index++) {
                 const realTeam = realRows[index]?.team;
@@ -135,15 +150,17 @@ export function Standings({
                 if (realTeam !== predictedTeam) continue;
 
                 const position = index + 1;
-                const points = position <= 2 ? 10 : 5;
+                groupPoints += position <= 2 ? 10 : 5;
+            }
 
-                row.points += points;
+            if (groupPoints > 0) {
+                row.points += groupPoints;
                 row.details.push({
-                    matchName: `Grup ${groupName} · Posició ${position}`,
-                    prediction: predictedTeam,
-                    result: realTeam,
-                    points,
-                    reason: "Posició exacta de grup",
+                    matchName: `Grup ${groupName}`,
+                    prediction: "Classificació pronosticada",
+                    result: "Classificació real",
+                    points: groupPoints,
+                    reason: "Posicions exactes de grup",
                 });
             }
         }
