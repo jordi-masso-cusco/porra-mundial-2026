@@ -44,6 +44,7 @@ export default function Home() {
     PublicAwardPrediction[]
   >([]);
   const [awardResults, setAwardResults] = useState<Record<string, AwardResult>>({});
+  const [selectedGroup, setSelectedGroup] = useState<string | null>(null);
 
   useEffect(() => {
     const savedUser = localStorage.getItem("porra_user");
@@ -60,13 +61,19 @@ export default function Home() {
     }
   }, [currentUser]);
 
+  useEffect(() => {
+    if (currentUser && selectedGroup === null) {
+      setSelectedGroup(currentUser.group_name ?? "ALL");
+    }
+  }, [currentUser, selectedGroup]);
+
   async function handleLogin(event: React.FormEvent) {
     event.preventDefault();
     setError("");
 
     const { data, error } = await supabase
       .from("users")
-      .select("id, name, is_admin")
+      .select("id, name, is_admin, group_name")
       .eq("name", name)
       .eq("access_code", accessCode)
       .single();
@@ -104,7 +111,7 @@ export default function Home() {
         access_code: cleanCode,
         is_admin: false,
       })
-      .select("id, name, is_admin")
+      .select("id, name, is_admin, group_name")
       .single();
 
     if (error || !data) {
@@ -166,7 +173,8 @@ export default function Home() {
         predicted_home,
         predicted_away,
         users (
-          name
+          name,
+          group_name
         ),
         matches (
           id,
@@ -343,7 +351,8 @@ export default function Home() {
     award_key,
     player_name,
     users (
-      name
+      name,
+      group_name
     )
   `);
 
@@ -513,6 +522,24 @@ export default function Home() {
     loadPublicPredictions();
   }
 
+  const filteredPublicPredictions =
+    selectedGroup === "ALL" || selectedGroup === null
+      ? publicPredictions
+      : publicPredictions.filter(
+        (prediction) =>
+          prediction.users?.group_name === selectedGroup ||
+          prediction.users?.group_name === null
+      );
+
+  const filteredPublicAwardPredictions =
+    selectedGroup === "ALL" || selectedGroup === null
+      ? publicAwardPredictions
+      : publicAwardPredictions.filter(
+        (prediction) =>
+          prediction.users?.group_name === selectedGroup ||
+          prediction.users?.group_name === null
+      );
+
   if (!currentUser) {
     return (
       <LoginForm
@@ -537,9 +564,22 @@ export default function Home() {
         </p>
       </div>
 
-      <button className="logout-button" onClick={logout}>
-        Sortir
-      </button>
+      <div className="top-actions">
+        <button className="logout-button" onClick={logout}>
+          Sortir
+        </button>
+
+        <select
+          value={selectedGroup ?? "ALL"}
+          onChange={(e) => setSelectedGroup(e.target.value)}
+          className="group-filter"
+          aria-label="Filtre de grup"
+        >
+          <option value="ALL">🌍 Tots</option>
+          <option value="PERLA">🍻 PERLA</option>
+          <option value="ORIOL GÜELL">⚽ ORIOL GÜELL</option>
+        </select>
+      </div>
 
       <Navigation
         activeTab={tab}
@@ -571,7 +611,7 @@ export default function Home() {
 
       {tab === "publicAwards" && (
         <PublicAwards
-          publicAwardPredictions={publicAwardPredictions}
+          publicAwardPredictions={filteredPublicAwardPredictions}
           awardResults={awardResults}
         />
       )}
@@ -579,19 +619,19 @@ export default function Home() {
       {tab === "groups" && (
         <PredictedGroupStandings
           matches={matches}
-          publicPredictions={publicPredictions}
+          publicPredictions={filteredPublicPredictions}
         />
       )}
 
       {tab === "others" && (
-        <PublicPredictions publicPredictions={publicPredictions} />
+        <PublicPredictions publicPredictions={filteredPublicPredictions} />
       )}
 
       {tab === "standings" && (
         <Standings
           matches={matches}
-          publicPredictions={publicPredictions}
-          publicAwardPredictions={publicAwardPredictions}
+          publicPredictions={filteredPublicPredictions}
+          publicAwardPredictions={filteredPublicAwardPredictions}
           awardResults={awardResults}
         />
       )}

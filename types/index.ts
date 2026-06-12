@@ -2,6 +2,7 @@ export type User = {
     id: string;
     name: string;
     is_admin: boolean;
+    group_name: string | null;
 };
 
 export type Match = {
@@ -23,7 +24,7 @@ export type Prediction = {
 export type PublicPrediction = {
     predicted_home: number | null;
     predicted_away: number | null;
-    users: { name: string } | null;
+    users: { name: string; group_name: string | null } | null;
     matches: Match | null;
 };
 
@@ -35,12 +36,12 @@ export type AwardPrediction = {
 export type PublicAwardPrediction = {
     award_key: string;
     player_name: string;
-    users: { name: string } | null;
+    users: { name: string; group_name: string | null } | null;
 };
 
 export type AwardResult = {
-  award_key: string;
-  player_name: string;
+    award_key: string;
+    player_name: string;
 };
 
 export type Tab =
