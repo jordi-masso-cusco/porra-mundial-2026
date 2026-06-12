@@ -17,18 +17,26 @@ const awards: AwardDefinition[] = [
 
 type AwardPredictionsProps = {
     predictions: Record<string, AwardPrediction>;
+    predictionsClosed: boolean;
     onAwardChange: (awardKey: string, value: string) => void;
     onSaveAward: (awardKey: string) => void;
 };
 
 export function AwardPredictions({
     predictions,
+    predictionsClosed,
     onAwardChange,
     onSaveAward,
 }: AwardPredictionsProps) {
     return (
         <>
             <h2>Premis individuals</h2>
+
+            {predictionsClosed && (
+                <p className="error">
+                    Les votacions dels premis individuals estan tancades.
+                </p>
+            )}
 
             {awards.map((award) => {
                 const prediction = predictions[award.key];
@@ -48,7 +56,9 @@ export function AwardPredictions({
                                 style={{ flex: 1 }}
                             />
 
-                            <button onClick={() => onSaveAward(award.key)}>Desar</button>
+                            <button disabled={predictionsClosed} onClick={() => onSaveAward(award.key)}>
+                                Desar
+                            </button>
                         </div>
                     </div>
                 );

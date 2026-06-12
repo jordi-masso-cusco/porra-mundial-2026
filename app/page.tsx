@@ -167,9 +167,14 @@ export default function Home() {
   }
 
   async function loadPublicPredictions() {
-    const { data, error } = await supabase
-      .from("predictions")
-      .select(`
+    const pageSize = 1000;
+    let from = 0;
+    let allPredictions: PublicPrediction[] = [];
+
+    while (true) {
+      const { data, error } = await supabase
+        .from("predictions")
+        .select(`
         predicted_home,
         predicted_away,
         users (
@@ -185,14 +190,25 @@ export default function Home() {
           home_score,
           away_score
         )
-      `);
+      `)
+        .range(from, from + pageSize - 1);
 
-    if (error) {
-      setError("No s'han pogut carregar les porres dels altres.");
-      return;
+      if (error) {
+        setError("No s'han pogut carregar les porres dels altres.");
+        return;
+      }
+
+      const page = (data ?? []) as unknown as PublicPrediction[];
+      allPredictions = [...allPredictions, ...page];
+
+      if (page.length < pageSize) {
+        break;
+      }
+
+      from += pageSize;
     }
 
-    setPublicPredictions((data ?? []) as unknown as PublicPrediction[]);
+    setPublicPredictions(allPredictions);
   }
 
   function updatePrediction(
@@ -378,6 +394,11 @@ export default function Home() {
 
   async function saveAwardPrediction(awardKey: string) {
     if (!currentUser) return;
+
+    if (areGroupStagePredictionsClosed) {
+      setError("Les votacions dels premis individuals estan tancades.");
+      return;
+    }
 
     const prediction = awardPredictions[awardKey];
 
@@ -605,6 +626,7 @@ export default function Home() {
       {tab === "awards" && (
         <AwardPredictions
           predictions={awardPredictions}
+          predictionsClosed={areGroupStagePredictionsClosed}
           onAwardChange={updateAwardPrediction}
           onSaveAward={saveAwardPrediction}
         />
