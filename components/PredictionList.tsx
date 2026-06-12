@@ -86,23 +86,22 @@ function calculatePredictedStandings(
 
         const prediction = predictions[match.id];
 
-        if (
-            !prediction ||
-            prediction.predicted_home === null ||
-            prediction.predicted_away === null
-        ) {
+        const predictedHome = prediction?.predicted_home ?? match.home_score;
+        const predictedAway = prediction?.predicted_away ?? match.away_score;
+
+        if (predictedHome === null || predictedAway === null) {
             continue;
         }
 
-        home.goalsFor += prediction.predicted_home;
-        home.goalsAgainst += prediction.predicted_away;
+        home.goalsFor += predictedHome;
+        home.goalsAgainst += predictedAway;
 
-        away.goalsFor += prediction.predicted_away;
-        away.goalsAgainst += prediction.predicted_home;
+        away.goalsFor += predictedAway;
+        away.goalsAgainst += predictedHome;
 
-        if (prediction.predicted_home > prediction.predicted_away) {
+        if (predictedHome > predictedAway) {
             home.points += 3;
-        } else if (prediction.predicted_home < prediction.predicted_away) {
+        } else if (predictedHome < predictedAway) {
             away.points += 3;
         } else {
             home.points += 1;
