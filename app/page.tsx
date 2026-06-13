@@ -501,7 +501,9 @@ export default function Home() {
 
       const isExceptionMatch =
         (match.home_team === "Mexico" && match.away_team === "South Africa") ||
-        (match.home_team === "Korea Republic" && match.away_team === "Czechia");
+        (match.home_team === "Korea Republic" && match.away_team === "Czechia") ||
+        (match.home_team === "Canada" && match.away_team === "Bosnia and Herzegovina") ||
+        (match.home_team === "USA" && match.away_team === "Paraguay");
 
       const exceptionMatchLocked =
         isExceptionMatch && new Date() >= new Date(match.kickoff);
