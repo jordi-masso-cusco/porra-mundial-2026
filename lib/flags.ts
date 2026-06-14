@@ -4,7 +4,7 @@ const countryCodes: Record<string, string> = {
   "Korea Republic": "kr",
   Czechia: "cz",
   Canada: "ca",
-  "Bosnia and Herzegovina": "ba",
+  Bosnia: "ba",
   USA: "us",
   Paraguay: "py",
   Haiti: "ht",

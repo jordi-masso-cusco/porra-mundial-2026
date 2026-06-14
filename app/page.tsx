@@ -6,6 +6,7 @@ import { Navigation } from "@/components/Navigation";
 import { PredictionList } from "@/components/PredictionList";
 import { PublicPredictions } from "@/components/PublicPredictions";
 import { AdminResults } from "@/components/AdminResults";
+import { AdminGroupStandings } from "@/components/AdminGroupStandings";
 import { Standings } from "@/components/Standings";
 import { PredictedGroupStandings } from "@/components/PredictedGroupStandings";
 import { AwardPredictions } from "@/components/AwardPredictions";
@@ -668,6 +669,8 @@ export default function Home() {
             onResultChange={updateOfficialResult}
             onSaveResult={saveOfficialResult}
           />
+
+          <AdminGroupStandings matches={matches} />
 
           <AdminAwards
             results={awardResults}

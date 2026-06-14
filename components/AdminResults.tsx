@@ -54,6 +54,9 @@ export function AdminResults({
     onResultChange,
     onSaveResult,
 }: AdminResultsProps) {
+    const sortedMatches = [...matches].sort(
+        (a, b) => new Date(a.kickoff).getTime() - new Date(b.kickoff).getTime()
+    );
     const matchesByGroup = groupMatchesByGroup(matches);
     const realGroupStandings = calculateRealGroupStandings(matches);
     const qualifiedTeams = getQualifiedTeams(realGroupStandings);
@@ -62,107 +65,57 @@ export function AdminResults({
         <>
             <h2>Resultats oficials</h2>
 
-            {Object.entries(matchesByGroup)
-                .sort(([groupA], [groupB]) => groupA.localeCompare(groupB))
-                .map(([groupName, groupMatches]) => {
-                    const standingsRows = realGroupStandings[groupName] ?? [];
-
-                    return (
-                        <section key={groupName} className="group-section">
-                            <h3>Grup {groupName}</h3>
-
-                            <div className="matches-grid">
-                                {groupMatches.map((match) => (
-                                    <div key={match.id} className="card">
-                                        <div className="compact-match">
-                                            <div className="team-left">
-                                                <Flag team={match.home_team} />
-                                                <span>{match.home_team}</span>
-                                            </div>
-
-                                            <div className="score-center">
-                                                <input
-                                                    className="score-input"
-                                                    type="number"
-                                                    min="0"
-                                                    value={match.home_score ?? ""}
-                                                    onChange={(e) =>
-                                                        onResultChange(
-                                                            match.id,
-                                                            "home_score",
-                                                            e.target.value
-                                                        )
-                                                    }
-                                                />
-
-                                                <span>-</span>
-
-                                                <input
-                                                    className="score-input"
-                                                    type="number"
-                                                    min="0"
-                                                    value={match.away_score ?? ""}
-                                                    onChange={(e) =>
-                                                        onResultChange(
-                                                            match.id,
-                                                            "away_score",
-                                                            e.target.value
-                                                        )
-                                                    }
-                                                />
-                                            </div>
-
-                                            <div className="team-right">
-                                                <Flag team={match.away_team} />
-                                                <span>{match.away_team}</span>
-                                            </div>
-                                        </div>
-
-                                        <div className="match-footer">
-                                            <span>{formatKickoff(match.kickoff)}</span>
-
-                                            <button onClick={() => onSaveResult(match.id)}>
-                                                Desar resultat
-                                            </button>
-                                        </div>
-                                    </div>
-                                ))}
+            <div className="matches-grid">
+                {sortedMatches.map((match) => (
+                    <div key={match.id} className="card">
+                        <div className="compact-match">
+                            <div className="team-left">
+                                <Flag team={match.home_team} />
+                                <span>{match.home_team}</span>
                             </div>
 
-                            <div className="card">
-                                <h4 style={{ marginTop: 0 }}>Classificació real</h4>
+                            <div className="score-center">
+                                <input
+                                    className="score-input"
+                                    type="number"
+                                    min="0"
+                                    value={match.home_score ?? ""}
+                                    onChange={(e) =>
+                                        onResultChange(match.id, "home_score", e.target.value)
+                                    }
+                                />
 
-                                {standingsRows.length === 0 && (
-                                    <p className="muted">
-                                        Encara no hi ha resultats oficials en aquest grup.
-                                    </p>
-                                )}
+                                <span>-</span>
 
-                                {standingsRows.map((row, index) => (
-                                    <div
-                                        key={row.team}
-                                        className={qualifiedTeams.has(row.team) ? "qualified-row" : "eliminated-row"}
-                                        style={{
-                                            display: "grid",
-                                            gridTemplateColumns: "32px 1fr 60px 60px 60px 60px",
-                                            gap: "8px",
-                                            padding: "6px 0",
-                                            borderTop: index === 0 ? "0" : "1px solid #eee",
-                                            alignItems: "center",
-                                        }}
-                                    >
-                                        <strong>{index + 1}</strong>
-                                        <TeamName team={row.team} />
-                                        <span>{row.points} pts</span>
-                                        <span>GF {row.goalsFor}</span>
-                                        <span>GC {row.goalsAgainst}</span>
-                                        <span>DG {row.goalDifference}</span>
-                                    </div>
-                                ))}
+                                <input
+                                    className="score-input"
+                                    type="number"
+                                    min="0"
+                                    value={match.away_score ?? ""}
+                                    onChange={(e) =>
+                                        onResultChange(match.id, "away_score", e.target.value)
+                                    }
+                                />
                             </div>
-                        </section>
-                    );
-                })}
+
+                            <div className="team-right">
+                                <Flag team={match.away_team} />
+                                <span>{match.away_team}</span>
+                            </div>
+                        </div>
+
+                        <div className="match-footer">
+                            <span>
+                                Grup {match.group_name} · {formatKickoff(match.kickoff)}
+                            </span>
+
+                            <button onClick={() => onSaveResult(match.id)}>
+                                Desar resultat
+                            </button>
+                        </div>
+                    </div>
+                ))}
+            </div>
         </>
     );
 }
