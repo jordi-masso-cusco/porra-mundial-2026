@@ -485,3 +485,32 @@ input:disabled {
   white-space: nowrap;
   color: var(--foreground);
 }
+
+.public-match-card {
+  padding: 0;
+  overflow: hidden;
+}
+
+.public-match-summary {
+  list-style: none;
+  padding: 16px;
+  cursor: pointer;
+}
+
+.public-match-summary::-webkit-details-marker {
+  display: none;
+}
+
+.public-predictions-list {
+  padding: 0 16px 12px;
+}
+
+.public-prediction-row {
+  display: grid;
+  grid-template-columns: 1fr auto auto;
+  gap: 10px;
+  align-items: center;
+  border-top: 1px solid #eee;
+  padding: 7px 0;
+  font-size: 0.95rem;
+}

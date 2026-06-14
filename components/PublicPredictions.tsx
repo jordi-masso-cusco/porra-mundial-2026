@@ -18,7 +18,7 @@ function TeamName({ team }: { team: string }) {
     return (
         <span className="team-name">
             {url && <img src={url} alt="" className="flag" />}
-            {team}
+            <span>{team}</span>
         </span>
     );
 }
@@ -68,25 +68,34 @@ function hasOfficialResult(prediction: PublicPrediction) {
     );
 }
 
-function groupPredictionsByGroupAndMatch(predictions: PublicPrediction[]) {
-    const groups: Record<string, Record<number, PublicPrediction[]>> = {};
+function formatKickoff(kickoff: string) {
+    return new Intl.DateTimeFormat("ca-ES", {
+        day: "2-digit",
+        month: "2-digit",
+        hour: "2-digit",
+        minute: "2-digit",
+    }).format(new Date(kickoff));
+}
+
+function groupPredictionsByMatch(predictions: PublicPrediction[]) {
+    const matches: Record<number, PublicPrediction[]> = {};
 
     for (const prediction of predictions) {
-        const groupName = prediction.matches?.group_name ?? "Sense grup";
         const matchId = prediction.matches?.id ?? 0;
 
-        if (!groups[groupName]) {
-            groups[groupName] = {};
+        if (!matches[matchId]) {
+            matches[matchId] = [];
         }
 
-        if (!groups[groupName][matchId]) {
-            groups[groupName][matchId] = [];
-        }
-
-        groups[groupName][matchId].push(prediction);
+        matches[matchId].push(prediction);
     }
 
-    return groups;
+    return Object.values(matches).sort((a, b) => {
+        const kickoffA = a[0]?.matches?.kickoff ?? "";
+        const kickoffB = b[0]?.matches?.kickoff ?? "";
+
+        return new Date(kickoffA).getTime() - new Date(kickoffB).getTime();
+    });
 }
 
 export function PublicPredictions({
@@ -109,8 +118,7 @@ export function PublicPredictions({
                 (prediction) => prediction.users?.name === selectedUser
             );
 
-    const groupedPredictions =
-        groupPredictionsByGroupAndMatch(filteredPredictions);
+    const matchGroups = groupPredictionsByMatch(filteredPredictions);
 
     return (
         <>
@@ -146,80 +154,68 @@ export function PublicPredictions({
                 </div>
             )}
 
-            {Object.entries(groupedPredictions).map(([groupName, matches]) => (
-                <section key={groupName} className="group-section">
-                    <h3>Grup {groupName}</h3>
+            <div className="matches-grid">
+                {matchGroups.map((matchPredictions) => {
+                    const match = matchPredictions[0]?.matches;
+                    if (!match) return null;
 
-                    <div className="matches-grid">
-                        {Object.values(matches).map((matchPredictions) => {
-                            const match = matchPredictions[0]?.matches;
-                            const officialResultAvailable = hasOfficialResult(
-                                matchPredictions[0]
-                            );
+                    const officialResultAvailable = hasOfficialResult(matchPredictions[0]);
 
-                            if (!match) return null;
-
-                            return (
-                                <div key={match.id} className="card">
-                                    <div className="compact-match">
-                                        <div className="team-left">
-                                            <TeamName team={match.home_team} />
-                                        </div>
-
-                                        <div className="score-center">
-                                            {officialResultAvailable ? (
-                                                <strong>
-                                                    {match.home_score} - {match.away_score}
-                                                </strong>
-                                            ) : (
-                                                <span className="badge">Pendent</span>
-                                            )}
-                                        </div>
-
-                                        <div className="team-right">
-                                            <TeamName team={match.away_team} />
-                                        </div>
+                    return (
+                        <details key={match.id} className="card public-match-card">
+                            <summary className="public-match-summary">
+                                <div className="compact-match">
+                                    <div className="team-left">
+                                        <TeamName team={match.home_team} />
                                     </div>
 
-                                    <div style={{ marginTop: "10px" }}>
-                                        {matchPredictions.map((prediction, index) => {
-                                            const points = getPredictionPoints(prediction);
+                                    <div className="score-center">
+                                        {officialResultAvailable ? (
+                                            <strong>
+                                                {match.home_score} - {match.away_score}
+                                            </strong>
+                                        ) : (
+                                            <span className="badge">Pendent</span>
+                                        )}
+                                    </div>
 
-                                            return (
-                                                <div
-                                                    key={index}
-                                                    style={{
-                                                        display: "grid",
-                                                        gridTemplateColumns: "1fr auto auto",
-                                                        gap: "10px",
-                                                        alignItems: "center",
-                                                        borderTop: index === 0 ? "0" : "1px solid #eee",
-                                                        padding: "6px 0",
-                                                        fontSize: "0.95rem",
-                                                    }}
-                                                >
-                                                    <span>{prediction.users?.name}</span>
-
-                                                    <strong>
-                                                        {prediction.predicted_home} -{" "}
-                                                        {prediction.predicted_away}
-                                                    </strong>
-
-                                                    {points !== null && points > 0 ? (
-                                                        <span className="badge">+{points}</span>
-                                                    ) : (
-                                                        <span />
-                                                    )}
-                                                </div>
-                                            );
-                                        })}
+                                    <div className="team-right">
+                                        <TeamName team={match.away_team} />
                                     </div>
                                 </div>
-                            );
-                        })}
-                    </div>
-                </section>
-            ))}
+
+                                <div className="match-footer">
+                                    <span>{formatKickoff(match.kickoff)}</span>
+                                    <span>Veure porres</span>
+                                </div>
+                            </summary>
+
+                            <div className="public-predictions-list">
+                                {matchPredictions.map((prediction, index) => {
+                                    const points = getPredictionPoints(prediction);
+
+                                    return (
+                                        <div key={index} className="public-prediction-row">
+                                            <span>{prediction.users?.name}</span>
+
+                                            <strong>
+                                                {prediction.predicted_home} -{" "}
+                                                {prediction.predicted_away}
+                                            </strong>
+
+                                            {points !== null && points > 0 ? (
+                                                <span className="badge">+{points}</span>
+                                            ) : (
+                                                <span />
+                                            )}
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                        </details>
+                    );
+                })}
+            </div>
         </>
     );
 }
