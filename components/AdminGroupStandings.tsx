@@ -3,55 +3,51 @@ import { calculateRealGroupStandings } from "@/lib/groupStandings";
 import { flagUrl } from "@/lib/flags";
 
 type AdminGroupStandingsProps = {
-  matches: Match[];
+    matches: Match[];
 };
 
 function TeamName({ team }: { team: string }) {
-  const url = flagUrl(team);
+    const url = flagUrl(team);
 
-  return (
-    <span className="team-name">
-      {url && <img src={url} alt="" className="flag" />}
-      {team}
-    </span>
-  );
+    return (
+        <span className="team-name">
+            {url && <img src={url} alt="" className="flag" />}
+            <span>{team}</span>
+        </span>
+    );
 }
 
 export function AdminGroupStandings({ matches }: AdminGroupStandingsProps) {
-  const groupStandings = calculateRealGroupStandings(matches);
+    const groupStandings = calculateRealGroupStandings(matches);
 
-  return (
-    <>
-      <h2>Classificació real dels grups</h2>
+    return (
+        <>
+            <h2>Classificació real dels grups</h2>
 
-      {Object.entries(groupStandings)
-        .sort(([groupA], [groupB]) => groupA.localeCompare(groupB))
-        .map(([groupName, rows]) => (
-          <div key={groupName} className="card">
-            <h3>Grup {groupName}</h3>
+            {Object.entries(groupStandings)
+                .sort(([groupA], [groupB]) => groupA.localeCompare(groupB))
+                .map(([groupName, rows]) => (
+                    <div key={groupName} className="card">
+                        <h3>Grup {groupName}</h3>
 
-            {rows.map((row, index) => (
-              <div
-                key={row.team}
-                style={{
-                  display: "grid",
-                  gridTemplateColumns: "32px 1fr 60px 60px 60px 60px",
-                  gap: "8px",
-                  padding: "6px 0",
-                  borderTop: index === 0 ? "0" : "1px solid #eee",
-                  alignItems: "center",
-                }}
-              >
-                <strong>{index + 1}</strong>
-                <TeamName team={row.team} />
-                <span>{row.points} pts</span>
-                <span>GF {row.goalsFor}</span>
-                <span>GC {row.goalsAgainst}</span>
-                <span>DG {row.goalDifference}</span>
-              </div>
-            ))}
-          </div>
-        ))}
-    </>
-  );
+                        {rows.map((row, index) => (
+                            <div
+                                key={row.team}
+                                className="predicted-standing-row"
+                            >
+                                <span className="predicted-standing-position">{index + 1}</span>
+
+                                <TeamName team={row.team} />
+
+                                <span className="predicted-standing-points">{row.points} pts</span>
+
+                                <span className="predicted-standing-dg">
+                                    DG {row.goalDifference}
+                                </span>
+                            </div>
+                        ))}
+                    </div>
+                ))}
+        </>
+    );
 }
