@@ -23,6 +23,8 @@ type StandingsProps = {
     matches: Match[];
     publicPredictions: PublicPrediction[];
     publicAwardPredictions: PublicAwardPrediction[];
+    allPublicPredictions: PublicPrediction[];
+    allPublicAwardPredictions: PublicAwardPrediction[];
     awardResults: Record<string, AwardResult>;
 };
 
@@ -50,12 +52,23 @@ function getSign(home: number, away: number) {
     return "X";
 }
 
-export function Standings({
-    matches,
-    publicPredictions,
-    publicAwardPredictions,
-    awardResults,
-}: StandingsProps) {
+function isGroupCompleted(matches: Match[], groupName: string) {
+    const groupMatches = matches.filter((match) => match.group_name === groupName);
+
+    return (
+        groupMatches.length === 6 &&
+        groupMatches.every(
+            (match) => match.home_score !== null && match.away_score !== null
+        )
+    );
+}
+
+function calculateRows(
+    matches: Match[],
+    publicPredictions: PublicPrediction[],
+    publicAwardPredictions: PublicAwardPrediction[],
+    awardResults: Record<string, AwardResult>
+) {
     const standings: Record<string, StandingRow> = {};
 
     for (const prediction of publicPredictions) {
@@ -65,6 +78,7 @@ export function Standings({
         if (!match) continue;
 
         if (match.home_score === null || match.away_score === null) continue;
+
         if (
             prediction.predicted_home === null ||
             prediction.predicted_away === null
@@ -114,17 +128,6 @@ export function Standings({
 
     const realGroupStandings = calculateRealGroupStandings(matches);
 
-    function isGroupCompleted(groupName: string) {
-        const groupMatches = matches.filter((match) => match.group_name === groupName);
-
-        return (
-            groupMatches.length === 6 &&
-            groupMatches.every(
-                (match) => match.home_score !== null && match.away_score !== null
-            )
-        );
-    }
-
     for (const row of Object.values(standings)) {
         const predictedGroupStandings = calculatePredictedGroupStandings(
             matches,
@@ -133,7 +136,7 @@ export function Standings({
         );
 
         for (const [groupName, realRows] of Object.entries(realGroupStandings)) {
-            if (!isGroupCompleted(groupName)) continue;
+            if (!isGroupCompleted(matches, groupName)) continue;
 
             const predictedRows = predictedGroupStandings[groupName];
 
@@ -198,11 +201,108 @@ export function Standings({
         }
     }
 
-    const rows = Object.values(standings).sort((a, b) => b.points - a.points);
+    return Object.values(standings).sort((a, b) => b.points - a.points);
+}
+
+function buildUserGroupMap(
+    publicPredictions: PublicPrediction[],
+    publicAwardPredictions: PublicAwardPrediction[]
+) {
+    const userGroupByName = new Map<string, string | null>();
+
+    for (const prediction of publicPredictions) {
+        if (prediction.users?.name) {
+            userGroupByName.set(
+                prediction.users.name,
+                prediction.users.group_name ?? null
+            );
+        }
+    }
+
+    for (const prediction of publicAwardPredictions) {
+        if (prediction.users?.name) {
+            userGroupByName.set(
+                prediction.users.name,
+                prediction.users.group_name ?? null
+            );
+        }
+    }
+
+    return userGroupByName;
+}
+
+export function Standings({
+    matches,
+    publicPredictions,
+    publicAwardPredictions,
+    allPublicPredictions,
+    allPublicAwardPredictions,
+    awardResults,
+}: StandingsProps) {
+    const rows = calculateRows(
+        matches,
+        publicPredictions,
+        publicAwardPredictions,
+        awardResults
+    );
+
+    const allRows = calculateRows(
+        matches,
+        allPublicPredictions,
+        allPublicAwardPredictions,
+        awardResults
+    );
+
+    const userGroupByName = buildUserGroupMap(
+        allPublicPredictions,
+        allPublicAwardPredictions
+    );
+
+    const teamStandings = ["PERLA", "ORIOL GÜELL"]
+        .map((groupName) => {
+            const members = allRows.filter((row) => {
+                const userGroup = userGroupByName.get(row.userName);
+
+                return userGroup === groupName || userGroup === null || userGroup === undefined;
+            });
+
+            const totalPoints = members.reduce((sum, row) => sum + row.points, 0);
+            const averagePoints =
+                members.length > 0 ? totalPoints / members.length : 0;
+
+            return {
+                groupName,
+                membersCount: members.length,
+                totalPoints,
+                averagePoints,
+            };
+        })
+        .sort((a, b) => b.averagePoints - a.averagePoints);
 
     return (
         <>
-            <h2>Classificació</h2>
+            <h2>Classificació per equips</h2>
+
+            <div className="team-standings-card">
+                {teamStandings.map((team, index) => (
+                    <div key={team.groupName} className="team-standing-row">
+                        <strong>
+                            {index + 1}.{" "}
+                            {team.groupName === "PERLA" ? "🍻 PERLA" : "⚽ ORIOL GÜELL"}
+                        </strong>
+
+                        <span className="badge">
+                            {team.averagePoints.toFixed(1)} punts / participant
+                        </span>
+
+                        <span className="muted">
+                            {team.totalPoints} punts · {team.membersCount} participants
+                        </span>
+                    </div>
+                ))}
+            </div>
+
+            <h2>Classificació individual</h2>
 
             {rows.length === 0 && (
                 <p>Encara no hi ha punts perquè falten resultats oficials.</p>
@@ -210,64 +310,46 @@ export function Standings({
 
             {rows.length > 0 && (
                 <>
-                    <div className="standings-grid">
-                        {[rows.slice(0, Math.ceil(rows.length / 2)), rows.slice(Math.ceil(rows.length / 2))].map(
-                            (columnRows, columnIndex) => (
-                                <div key={columnIndex} className="standings-card">
-                                    <div className="standings-header-row">
-                                        <span>#</span>
-                                        <span>Participant</span>
-                                        <span>Punts</span>
-                                        <span></span>
+                    <div className="standings-card">
+                        <div className="standings-header-row">
+                            <span>#</span>
+                            <span>Participant</span>
+                            <span>Punts</span>
+                            <span></span>
+                        </div>
+
+                        <div className="standings-list">
+                            {rows.map((row, index) => (
+                                <details key={row.userName} className="standings-row">
+                                    <summary className="standings-summary">
+                                        <span className="standings-position">{index + 1}</span>
+
+                                        <strong className="standings-name">{row.userName}</strong>
+
+                                        <span className="badge">{row.points} punts</span>
+
+                                        <span className="standings-chevron">⌄</span>
+                                    </summary>
+
+                                    <div className="standings-details">
+                                        {row.details.map((detail, detailIndex) => (
+                                            <div key={detailIndex} className="standings-detail-row">
+                                                <strong>{detail.matchName}</strong>
+                                                <span className="muted">
+                                                    Pronòstic: {detail.prediction}
+                                                </span>
+                                                <span className="muted">
+                                                    Resultat: {detail.result}
+                                                </span>
+                                                <span>
+                                                    <strong>{detail.points}</strong> · {detail.reason}
+                                                </span>
+                                            </div>
+                                        ))}
                                     </div>
-
-                                    {columnRows.map((row, rowIndex) => {
-                                        const absoluteIndex =
-                                            columnIndex === 0
-                                                ? rowIndex
-                                                : rowIndex + Math.ceil(rows.length / 2);
-
-                                        return (
-                                            <details key={row.userName} className="standings-row">
-                                                <summary className="standings-summary">
-                                                    <span className="standings-position">
-                                                        {absoluteIndex + 1}
-                                                    </span>
-
-                                                    <strong className="standings-name">
-                                                        {row.userName}
-                                                    </strong>
-
-                                                    <span className="badge">{row.points} punts</span>
-
-                                                    <span className="standings-chevron">⌄</span>
-                                                </summary>
-
-                                                <div className="standings-details">
-                                                    {row.details.map((detail, detailIndex) => (
-                                                        <div
-                                                            key={detailIndex}
-                                                            className="standings-detail-row"
-                                                        >
-                                                            <strong>{detail.matchName}</strong>
-                                                            <span className="muted">
-                                                                Pronòstic: {detail.prediction}
-                                                            </span>
-                                                            <span className="muted">
-                                                                Resultat: {detail.result}
-                                                            </span>
-                                                            <span>
-                                                                <strong>{detail.points}</strong> · {detail.reason}
-                                                            </span>
-                                                        </div>
-                                                    ))}
-                                                </div>
-                                            </details>
-                                        );
-                                    })}
-                                </div>
-                            )
-                        )}
+                                </details>
+                            ))}
+                        </div>
                     </div>
 
                     <p className="muted" style={{ textAlign: "center", marginTop: "16px" }}>

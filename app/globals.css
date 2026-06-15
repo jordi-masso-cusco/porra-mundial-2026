@@ -277,12 +277,6 @@ input:disabled {
   opacity: 0.55;
 }
 
-.standings-grid {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 12px;
-}
-
 .standings-card {
   background: var(--card);
   border: 1px solid var(--border);
@@ -437,10 +431,6 @@ input:disabled {
     font-size: 0.8rem;
   }
 
-  .standings-grid {
-    grid-template-columns: 1fr;
-  }
-
   .standings-summary,
   .standings-header-row {
     grid-template-columns: 36px 1fr auto 18px;
@@ -514,4 +504,40 @@ input:disabled {
   border-top: 1px solid #eee;
   padding: 7px 0;
   font-size: 0.95rem;
+}
+
+.team-standings-card {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  margin-bottom: 24px;
+}
+
+.team-standing-row {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 16px;
+  display: grid;
+  gap: 8px;
+}
+
+.standings-list {
+  column-count: 2;
+  column-gap: 12px;
+}
+
+.standings-list .standings-row {
+  break-inside: avoid;
+  display: block;
+}
+
+@media (max-width: 640px) {
+  .team-standings-card {
+    grid-template-columns: 1fr;
+  }
+
+  .standings-list {
+    column-count: 1;
+  }
 }

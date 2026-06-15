@@ -658,6 +658,8 @@ export default function Home() {
           matches={matches}
           publicPredictions={filteredPublicPredictions}
           publicAwardPredictions={filteredPublicAwardPredictions}
+          allPublicPredictions={publicPredictions}
+          allPublicAwardPredictions={publicAwardPredictions}
           awardResults={awardResults}
         />
       )}
