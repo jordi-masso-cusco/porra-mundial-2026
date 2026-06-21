@@ -1,7 +1,6 @@
 import type { Match, Prediction } from "@/types";
 import { flagUrl } from "@/lib/flags";
 import { getQualifiedTeams } from "@/lib/groupStandings";
-import { sortMatchesForDisplay } from "@/lib/matches";
 
 type PredictionListProps = {
     matches: Match[];
@@ -24,7 +23,11 @@ type TeamStanding = {
 };
 
 function groupMatchesByGroup(matches: Match[]) {
-    return matches.reduce<Record<string, Match[]>>((groups, match) => {
+    const uniqueMatches = Array.from(
+        new Map(matches.map((match) => [match.id, match])).values()
+    );
+
+    return uniqueMatches.reduce<Record<string, Match[]>>((groups, match) => {
         if (!groups[match.group_name]) {
             groups[match.group_name] = [];
         }
@@ -152,7 +155,7 @@ export function PredictionList({
 
     return (
         <>
-            <h2  className="section-title">Els meus pronòstics</h2>
+            <h2 className="section-title">Els meus pronòstics</h2>
 
             {predictionsClosed && (
                 <p className="error">
@@ -181,67 +184,72 @@ export function PredictionList({
                             <h3>Grup {groupName}</h3>
 
                             <div className="matches-grid">
-                                {sortMatchesForDisplay(matches).map((match) => {
-                                    const prediction = predictions[match.id];
-                                    const matchLocked =
-                                        predictionsClosed || isExceptionMatchLocked(match);
+                                {[...groupMatches]
+                                    .sort(
+                                        (a, b) =>
+                                            new Date(a.kickoff).getTime() - new Date(b.kickoff).getTime()
+                                    )
+                                    .map((match) => {
+                                        const prediction = predictions[match.id];
+                                        const matchLocked =
+                                            predictionsClosed || isExceptionMatchLocked(match);
 
-                                    return (
-                                        <div key={match.id} className="card">
-                                            <div className="compact-match">
-                                                <div className="team-left">
-                                                    <Flag team={match.home_team} />
-                                                    <span>{match.home_team}</span>
+                                        return (
+                                            <div key={match.id} className="card">
+                                                <div className="compact-match">
+                                                    <div className="team-left">
+                                                        <Flag team={match.home_team} />
+                                                        <span>{match.home_team}</span>
+                                                    </div>
+
+                                                    <div className="score-center">
+                                                        <input
+                                                            className="score-input"
+                                                            type="number"
+                                                            min="0"
+                                                            disabled={matchLocked}
+                                                            value={prediction?.predicted_home ?? ""}
+                                                            onChange={(e) =>
+                                                                onPredictionChange(
+                                                                    match.id,
+                                                                    "predicted_home",
+                                                                    e.target.value
+                                                                )
+                                                            }
+                                                        />
+
+                                                        <span>-</span>
+
+                                                        <input
+                                                            className="score-input"
+                                                            type="number"
+                                                            min="0"
+                                                            disabled={matchLocked}
+                                                            value={prediction?.predicted_away ?? ""}
+                                                            onChange={(e) =>
+                                                                onPredictionChange(
+                                                                    match.id,
+                                                                    "predicted_away",
+                                                                    e.target.value
+                                                                )
+                                                            }
+                                                        />
+                                                    </div>
+
+                                                    <div className="team-right">
+                                                        <Flag team={match.away_team} />
+                                                        <span>{match.away_team}</span>
+                                                    </div>
                                                 </div>
 
-                                                <div className="score-center">
-                                                    <input
-                                                        className="score-input"
-                                                        type="number"
-                                                        min="0"
-                                                        disabled={matchLocked}
-                                                        value={prediction?.predicted_home ?? ""}
-                                                        onChange={(e) =>
-                                                            onPredictionChange(
-                                                                match.id,
-                                                                "predicted_home",
-                                                                e.target.value
-                                                            )
-                                                        }
-                                                    />
+                                                <div className="match-footer">
+                                                    <span>{formatKickoff(match.kickoff)}</span>
 
-                                                    <span>-</span>
-
-                                                    <input
-                                                        className="score-input"
-                                                        type="number"
-                                                        min="0"
-                                                        disabled={matchLocked}
-                                                        value={prediction?.predicted_away ?? ""}
-                                                        onChange={(e) =>
-                                                            onPredictionChange(
-                                                                match.id,
-                                                                "predicted_away",
-                                                                e.target.value
-                                                            )
-                                                        }
-                                                    />
-                                                </div>
-
-                                                <div className="team-right">
-                                                    <Flag team={match.away_team} />
-                                                    <span>{match.away_team}</span>
+                                                    {matchLocked && <span>Pronòstic tancat</span>}
                                                 </div>
                                             </div>
-
-                                            <div className="match-footer">
-                                                <span>{formatKickoff(match.kickoff)}</span>
-
-                                                {matchLocked && <span>Pronòstic tancat</span>}
-                                            </div>
-                                        </div>
-                                    );
-                                })}
+                                        );
+                                    })}
                             </div>
 
                             <div className="card predicted-standings-card">
