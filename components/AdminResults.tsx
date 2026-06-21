@@ -6,6 +6,13 @@ import { splitMatchesByStatus } from "@/lib/matches";
 
 type AdminResultsProps = {
     matches: Match[];
+    editedResults: Record<
+        number,
+        {
+            home_score: number | null;
+            away_score: number | null;
+        }
+    >;
     onResultChange: (
         matchId: number,
         field: "home_score" | "away_score",
@@ -53,6 +60,7 @@ function groupMatchesByGroup(matches: Match[]) {
 
 export function AdminResults({
     matches,
+    editedResults,
     onResultChange,
     onSaveResult,
 }: AdminResultsProps) {
@@ -85,7 +93,11 @@ export function AdminResults({
                                             className="score-input"
                                             type="number"
                                             min="0"
-                                            value={match.home_score ?? ""}
+                                            value={
+                                                editedResults[match.id]?.home_score ??
+                                                match.home_score ??
+                                                ""
+                                            }
                                             onChange={(e) =>
                                                 onResultChange(match.id, "home_score", e.target.value)
                                             }
@@ -97,7 +109,11 @@ export function AdminResults({
                                             className="score-input"
                                             type="number"
                                             min="0"
-                                            value={match.away_score ?? ""}
+                                            value={
+                                                editedResults[match.id]?.away_score ??
+                                                match.away_score ??
+                                                ""
+                                            }
                                             onChange={(e) =>
                                                 onResultChange(match.id, "away_score", e.target.value)
                                             }
@@ -142,7 +158,11 @@ export function AdminResults({
                                             className="score-input"
                                             type="number"
                                             min="0"
-                                            value={match.home_score ?? ""}
+                                            value={
+                                                editedResults[match.id]?.home_score ??
+                                                match.home_score ??
+                                                ""
+                                            }
                                             onChange={(e) =>
                                                 onResultChange(match.id, "home_score", e.target.value)
                                             }
@@ -154,7 +174,11 @@ export function AdminResults({
                                             className="score-input"
                                             type="number"
                                             min="0"
-                                            value={match.away_score ?? ""}
+                                            value={
+                                                editedResults[match.id]?.away_score ??
+                                                match.away_score ??
+                                                ""
+                                            }
                                             onChange={(e) =>
                                                 onResultChange(match.id, "away_score", e.target.value)
                                             }

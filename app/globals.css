@@ -651,3 +651,26 @@ details:not([open])>.admin-section-summary::after {
 .admin-section-content {
   margin-top: 16px;
 }
+
+.standings-breakdown {
+  margin: 12px 0 16px;
+  padding: 12px;
+  border-radius: 10px;
+  background: var(--card-background);
+  border: 1px solid var(--border);
+}
+
+.standings-breakdown-row,
+.standings-breakdown-total {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 4px 0;
+}
+
+.standings-breakdown-total {
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px solid var(--border);
+  font-weight: 700;
+}

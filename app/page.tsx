@@ -57,6 +57,9 @@ export default function Home() {
   const [knockoutResults, setKnockoutResults] = useState<
     Record<number, KnockoutResult>
   >({});
+  const [editedOfficialResults, setEditedOfficialResults] = useState<
+    Record<number, { home_score: number | null; away_score: number | null }>
+  >({});
   const groupStagePredictionDeadline = new Date("2026-06-13T17:00:00+02:00");
   const areGroupStagePredictionsClosed = new Date() >= groupStagePredictionDeadline;
   const lastGroupStageMatch = matches
@@ -386,16 +389,14 @@ export default function Home() {
   ) {
     const numericValue = value === "" ? null : Number(value);
 
-    setMatches((currentMatches) =>
-      currentMatches.map((match) =>
-        match.id === matchId
-          ? {
-            ...match,
-            [field]: numericValue,
-          }
-          : match
-      )
-    );
+    setEditedOfficialResults((current) => ({
+      ...current,
+      [matchId]: {
+        home_score: current[matchId]?.home_score ?? null,
+        away_score: current[matchId]?.away_score ?? null,
+        [field]: numericValue,
+      },
+    }));
   }
 
   async function saveOfficialResult(matchId: number) {
@@ -403,7 +404,19 @@ export default function Home() {
 
     if (!match) return;
 
-    if (match.home_score === null || match.away_score === null) {
+    const editedResult = editedOfficialResults[matchId];
+
+    const homeScore =
+      editedResult?.home_score !== undefined
+        ? editedResult.home_score
+        : match.home_score;
+
+    const awayScore =
+      editedResult?.away_score !== undefined
+        ? editedResult.away_score
+        : match.away_score;
+
+    if (homeScore === null || awayScore === null) {
       setError("Has d'omplir els dos resultats abans de desar.");
       return;
     }
@@ -414,8 +427,8 @@ export default function Home() {
     const { error } = await supabase
       .from("matches")
       .update({
-        home_score: match.home_score,
-        away_score: match.away_score,
+        home_score: homeScore,
+        away_score: awayScore,
       })
       .eq("id", matchId);
 
@@ -423,6 +436,24 @@ export default function Home() {
       setError("No s'ha pogut desar el resultat oficial.");
       return;
     }
+
+    setMatches((currentMatches) =>
+      currentMatches.map((item) =>
+        item.id === matchId
+          ? {
+            ...item,
+            home_score: homeScore,
+            away_score: awayScore,
+          }
+          : item
+      )
+    );
+
+    setEditedOfficialResults((current) => {
+      const next = { ...current };
+      delete next[matchId];
+      return next;
+    });
 
     setSavedMessage("Resultat oficial desat correctament.");
   }
@@ -1058,6 +1089,9 @@ export default function Home() {
           allPublicPredictions={publicPredictions}
           allPublicAwardPredictions={publicAwardPredictions}
           awardResults={awardResults}
+          publicKnockoutPredictions={filteredPublicKnockoutPredictions}
+          allPublicKnockoutPredictions={publicKnockoutPredictions}
+          knockoutResults={knockoutResults}
         />
       )}
 
@@ -1071,6 +1105,7 @@ export default function Home() {
             <div className="admin-section-content">
               <AdminResults
                 matches={matches}
+                editedResults={editedOfficialResults}
                 onResultChange={updateOfficialResult}
                 onSaveResult={saveOfficialResult}
               />

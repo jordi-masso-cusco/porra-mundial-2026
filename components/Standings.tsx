@@ -1,11 +1,24 @@
-import type { AwardResult, Match, PublicAwardPrediction, PublicPrediction } from "@/types";
+import type { AwardResult, Match, PublicAwardPrediction, PublicPrediction, PublicKnockoutPrediction, KnockoutResult } from "@/types";
 
 import {
     calculatePredictedGroupStandings,
     calculateRealGroupStandings,
 } from "@/lib/groupStandings";
 
-import { calculateRoundOf32QualificationPoints } from "@/lib/knockoutScoring";
+import {
+    calculateRoundOf32QualificationPoints,
+    calculateRoundOf16QualificationPoints,
+    calculateQuarterFinalQualificationPoints,
+    calculateSemiFinalQualificationPoints,
+    calculateFinalQualificationPoints,
+    calculatePodiumPoints,
+    calculateRoundOf32MatchPoints,
+    calculateRoundOf16MatchPoints,
+    calculateQuarterFinalMatchPoints,
+    calculateSemiFinalMatchPoints,
+    calculateThirdPlaceMatchPoints,
+    calculateFinalMatchPoints,
+} from "@/lib/knockoutScoring";
 
 type StandingDetail = {
     matchName: string;
@@ -13,12 +26,21 @@ type StandingDetail = {
     result: string;
     points: number;
     reason: string;
+    category: keyof StandingBreakdown;
+};
+
+type StandingBreakdown = {
+    groupResults: number;
+    groupStandings: number;
+    knockout: number;
+    awards: number;
 };
 
 type StandingRow = {
     userName: string;
     points: number;
     details: StandingDetail[];
+    breakdown: StandingBreakdown;
 };
 
 type StandingsProps = {
@@ -28,6 +50,9 @@ type StandingsProps = {
     allPublicPredictions: PublicPrediction[];
     allPublicAwardPredictions: PublicAwardPrediction[];
     awardResults: Record<string, AwardResult>;
+    publicKnockoutPredictions: PublicKnockoutPrediction[];
+    allPublicKnockoutPredictions: PublicKnockoutPrediction[];
+    knockoutResults: Record<number, KnockoutResult>;
 };
 
 const awardPoints: Record<string, number> = {
@@ -69,9 +94,64 @@ function calculateRows(
     matches: Match[],
     publicPredictions: PublicPrediction[],
     publicAwardPredictions: PublicAwardPrediction[],
+    publicKnockoutPredictions: PublicKnockoutPrediction[],
+    knockoutResults: Record<number, KnockoutResult>,
     awardResults: Record<string, AwardResult>
 ) {
     const standings: Record<string, StandingRow> = {};
+
+    function getOrCreateStanding(userName: string) {
+        if (!standings[userName]) {
+            standings[userName] = {
+                userName,
+                points: 0,
+                details: [],
+                breakdown: {
+                    groupResults: 0,
+                    groupStandings: 0,
+                    knockout: 0,
+                    awards: 0,
+                },
+            };
+        }
+
+        return standings[userName];
+    }
+
+    function addAggregatedPoints(
+        row: StandingRow,
+        {
+            title,
+            prediction,
+            result,
+            details,
+            reason,
+            category,
+        }: {
+            title: string;
+            prediction: string;
+            result: string;
+            details: { points: number; reason: string }[];
+            reason: string;
+            category: keyof StandingBreakdown;
+        }
+    ) {
+        const total = details.reduce((sum, detail) => sum + detail.points, 0);
+
+        if (total === 0) return;
+
+        row.points += total;
+        row.breakdown[category] += total;
+
+        row.details.push({
+            matchName: title,
+            prediction,
+            result,
+            points: total,
+            reason,
+            category: "groupResults",
+        });
+    }
 
     for (const prediction of publicPredictions) {
         if (!prediction.users?.name || !prediction.matches) continue;
@@ -88,15 +168,7 @@ function calculateRows(
             continue;
         }
 
-        const userName = prediction.users.name;
-
-        if (!standings[userName]) {
-            standings[userName] = {
-                userName,
-                points: 0,
-                details: [],
-            };
-        }
+        const row = getOrCreateStanding(prediction.users.name);
 
         const exact =
             prediction.predicted_home === match.home_score &&
@@ -117,42 +189,189 @@ function calculateRows(
             reason = "Signe 1X2 correcte";
         }
 
-        standings[userName].points += points;
+        row.points += points;
 
-        standings[userName].details.push({
+        row.breakdown.groupResults += points;
+
+        row.details.push({
             matchName: `${match.home_team} - ${match.away_team}`,
             prediction: `${prediction.predicted_home} - ${prediction.predicted_away}`,
             result: `${match.home_score} - ${match.away_score}`,
             points,
             reason,
+            category: "groupResults",
         });
     }
 
     const realGroupStandings = calculateRealGroupStandings(matches);
 
     for (const row of Object.values(standings)) {
-        const knockoutDetails = calculateRoundOf32QualificationPoints(
-            matches,
-            publicPredictions,
-            row.userName
-        );
+        addAggregatedPoints(row, {
+            title: "Classificats a setzens",
+            prediction: "Equips classificats pronosticats",
+            result: "Equips classificats reals",
+            details: calculateRoundOf32QualificationPoints(
+                matches,
+                publicPredictions,
+                row.userName
+            ),
+            reason: "Equips classificats a setzens encertats",
+            category: "knockout",
+        });
 
-        const totalKnockoutPoints = knockoutDetails.reduce(
-            (sum, detail) => sum + detail.points,
-            0
-        );
+        addAggregatedPoints(row, {
+            title: "Resultats setzens",
+            prediction: "Resultats pronosticats",
+            result: "Resultats oficials",
+            details: calculateRoundOf32MatchPoints(
+                matches,
+                publicKnockoutPredictions,
+                knockoutResults,
+                row.userName
+            ),
+            reason: "Encerts de resultat/signe a setzens",
+            category: "knockout",
+        });
 
-        if (totalKnockoutPoints > 0) {
-            row.points += totalKnockoutPoints;
+        addAggregatedPoints(row, {
+            title: "Classificats a vuitens",
+            prediction: "Equips classificats pronosticats",
+            result: "Equips classificats reals",
+            details: calculateRoundOf16QualificationPoints(
+                matches,
+                publicKnockoutPredictions,
+                knockoutResults,
+                row.userName
+            ),
+            reason: "Equips classificats a vuitens encertats",
+            category: "knockout",
+        });
 
-            row.details.push({
-                matchName: "Classificats a setzens",
-                prediction: "Equips classificats pronosticats",
-                result: "Equips classificats reals",
-                points: totalKnockoutPoints,
-                reason: `${knockoutDetails.length} equips classificats encertats`,
-            });
-        }
+        addAggregatedPoints(row, {
+            title: "Resultats vuitens",
+            prediction: "Resultats pronosticats",
+            result: "Resultats oficials",
+            details: calculateRoundOf16MatchPoints(
+                matches,
+                publicKnockoutPredictions,
+                knockoutResults,
+                row.userName
+            ),
+            reason: "Encerts de resultat/signe a vuitens",
+            category: "knockout",
+        });
+
+        addAggregatedPoints(row, {
+            title: "Classificats a quarts",
+            prediction: "Equips classificats pronosticats",
+            result: "Equips classificats reals",
+            details: calculateQuarterFinalQualificationPoints(
+                matches,
+                publicKnockoutPredictions,
+                knockoutResults,
+                row.userName
+            ),
+            reason: "Equips classificats a quarts encertats",
+            category: "knockout",
+        });
+
+        addAggregatedPoints(row, {
+            title: "Resultats quarts",
+            prediction: "Resultats pronosticats",
+            result: "Resultats oficials",
+            details: calculateQuarterFinalMatchPoints(
+                matches,
+                publicKnockoutPredictions,
+                knockoutResults,
+                row.userName
+            ),
+            reason: "Encerts de resultat/signe a quarts",
+            category: "knockout",
+        });
+
+        addAggregatedPoints(row, {
+            title: "Classificats a semifinals",
+            prediction: "Equips classificats pronosticats",
+            result: "Equips classificats reals",
+            details: calculateSemiFinalQualificationPoints(
+                matches,
+                publicKnockoutPredictions,
+                knockoutResults,
+                row.userName
+            ),
+            reason: "Equips classificats a semifinals encertats",
+            category: "knockout",
+        });
+
+        addAggregatedPoints(row, {
+            title: "Resultats semifinals",
+            prediction: "Resultats pronosticats",
+            result: "Resultats oficials",
+            details: calculateSemiFinalMatchPoints(
+                matches,
+                publicKnockoutPredictions,
+                knockoutResults,
+                row.userName
+            ),
+            reason: "Encerts de resultat/signe a semifinals",
+            category: "knockout",
+        });
+
+        addAggregatedPoints(row, {
+            title: "Finalistes",
+            prediction: "Equips finalistes pronosticats",
+            result: "Equips finalistes reals",
+            details: calculateFinalQualificationPoints(
+                matches,
+                publicKnockoutPredictions,
+                knockoutResults,
+                row.userName
+            ),
+            reason: "Finalistes encertats",
+            category: "knockout",
+        });
+
+        addAggregatedPoints(row, {
+            title: "Resultat 3r lloc",
+            prediction: "Resultat pronosticat",
+            result: "Resultat oficial",
+            details: calculateThirdPlaceMatchPoints(
+                matches,
+                publicKnockoutPredictions,
+                knockoutResults,
+                row.userName
+            ),
+            reason: "Encerts de resultat/signe al partit pel 3r lloc",
+            category: "knockout",
+        });
+
+        addAggregatedPoints(row, {
+            title: "Resultat final",
+            prediction: "Resultat pronosticat",
+            result: "Resultat oficial",
+            details: calculateFinalMatchPoints(
+                matches,
+                publicKnockoutPredictions,
+                knockoutResults,
+                row.userName
+            ),
+            reason: "Encerts de resultat/signe a la final",
+            category: "knockout",
+        });
+
+        addAggregatedPoints(row, {
+            title: "Podis finals",
+            prediction: "Campió, subcampió i tercer pronosticats",
+            result: "Podis reals",
+            details: calculatePodiumPoints(
+                matches,
+                publicKnockoutPredictions,
+                knockoutResults,
+                row.userName
+            ),
+            reason: "Encerts finals",
+            category: "knockout",
+        });
     }
 
     for (const row of Object.values(standings)) {
@@ -185,12 +404,14 @@ function calculateRows(
 
             if (groupPoints > 0) {
                 row.points += groupPoints;
+                row.breakdown.groupStandings += groupPoints;
                 row.details.push({
                     matchName: `Grup ${groupName}`,
                     prediction: "Classificació pronosticada",
                     result: "Classificació real",
                     points: groupPoints,
                     reason: "Posicions exactes de grup",
+                    category: "groupResults",
                 });
             }
         }
@@ -203,13 +424,7 @@ function calculateRows(
         const result = awardResults[awardPrediction.award_key];
         if (!result) continue;
 
-        if (!standings[userName]) {
-            standings[userName] = {
-                userName,
-                points: 0,
-                details: [],
-            };
-        }
+        const row = getOrCreateStanding(userName);
 
         const predictedPlayer = awardPrediction.player_name.trim().toLowerCase();
         const realPlayer = result.player_name.trim().toLowerCase();
@@ -217,13 +432,15 @@ function calculateRows(
         if (predictedPlayer === realPlayer) {
             const points = awardPoints[awardPrediction.award_key] ?? 0;
 
-            standings[userName].points += points;
-            standings[userName].details.push({
-                matchName: awardLabels[awardPrediction.award_key] ?? awardPrediction.award_key,
+            row.points += points;
+            row.details.push({
+                matchName:
+                    awardLabels[awardPrediction.award_key] ?? awardPrediction.award_key,
                 prediction: awardPrediction.player_name,
                 result: result.player_name,
                 points,
                 reason: "Premi individual correcte",
+                category: "groupResults",
             });
         }
     }
@@ -262,14 +479,19 @@ export function Standings({
     matches,
     publicPredictions,
     publicAwardPredictions,
+    publicKnockoutPredictions,
     allPublicPredictions,
     allPublicAwardPredictions,
+    allPublicKnockoutPredictions,
+    knockoutResults,
     awardResults,
 }: StandingsProps) {
     const rows = calculateRows(
         matches,
         publicPredictions,
         publicAwardPredictions,
+        publicKnockoutPredictions,
+        knockoutResults,
         awardResults
     );
 
@@ -277,6 +499,8 @@ export function Standings({
         matches,
         allPublicPredictions,
         allPublicAwardPredictions,
+        allPublicKnockoutPredictions,
+        knockoutResults,
         awardResults
     );
 
@@ -293,9 +517,6 @@ export function Standings({
                 return userGroup === groupName || userGroup === null || userGroup === undefined;
             });
 
-            /*             const members = rows.filter(
-                            (row) => userGroupByName.get(row.userName) === groupName
-                        ); */
 
             const totalPoints = members.reduce((sum, row) => sum + row.points, 0);
             const averagePoints =
@@ -361,22 +582,53 @@ export function Standings({
 
                                         <span className="standings-chevron">⌄</span>
                                     </summary>
-
                                     <div className="standings-details">
-                                        {row.details.map((detail, detailIndex) => (
-                                            <div key={detailIndex} className="standings-detail-row">
-                                                <strong>{detail.matchName}</strong>
-                                                <span className="muted">
-                                                    Pronòstic: {detail.prediction}
-                                                </span>
-                                                <span className="muted">
-                                                    Resultat: {detail.result}
-                                                </span>
-                                                <span>
-                                                    <strong>{detail.points}</strong> · {detail.reason}
-                                                </span>
-                                            </div>
-                                        ))}
+
+                                        {[
+                                            ["groupResults", "Resultats fase de grups "],
+                                            ["groupStandings", "Classificació grups "],
+                                            ["knockout", "Eliminatòries "],
+                                            ["awards", "Premis "],
+                                        ].map(([category, label]) => {
+                                            const categoryKey = category as keyof StandingBreakdown;
+                                            const categoryDetails = row.details.filter(
+                                                (detail) => detail.category === categoryKey
+                                            );
+
+                                            return (
+                                                <details key={category} className="standings-breakdown-category">
+                                                    <summary className="standings-breakdown-row">
+                                                        <span>{label}</span>
+                                                        <strong>{row.breakdown[categoryKey]}</strong>
+                                                    </summary>
+
+                                                    <div className="standings-category-details">
+                                                        {categoryDetails.length === 0 ? (
+                                                            <p className="muted">Sense punts en aquesta categoria.</p>
+                                                        ) : (
+                                                            categoryDetails.map((detail, detailIndex) => (
+                                                                <div key={detailIndex} className="standings-detail-row">
+                                                                    <strong>{detail.matchName}</strong>
+
+                                                                    <span className="muted">Pronòstic: {detail.prediction}</span>
+
+                                                                    <span className="muted">Resultat: {detail.result}</span>
+
+                                                                    <span>
+                                                                        <strong>{detail.points}</strong> · {detail.reason}
+                                                                    </span>
+                                                                </div>
+                                                            ))
+                                                        )}
+                                                    </div>
+                                                </details>
+                                            );
+                                        })}
+
+                                        <div className="standings-breakdown-total">
+                                            <span>Total</span>
+                                            <strong>{row.points}</strong>
+                                        </div>
                                     </div>
                                 </details>
                             ))}
