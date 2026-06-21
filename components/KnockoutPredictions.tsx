@@ -170,7 +170,7 @@ export function KnockoutPredictions({
 
         return (
             <>
-                <h2 className="section-title">{title}</h2>
+                <h3 className="subsection-title">{title}</h3>
 
                 <div className="matches-grid">
                     {roundMatches.map((match) => (
@@ -202,13 +202,15 @@ export function KnockoutPredictions({
                 classifica.
             </p>
 
-            <button
-                disabled={!predictionsOpen}
-                onClick={onSaveAllPredictions}
-                style={{ marginBottom: "16px" }}
-            >
-                Desar tots els pronòstics d&apos;eliminatòries
-            </button>
+            <div style={{ marginBottom: "16px" }}>
+                <button
+                    disabled={!predictionsOpen}
+                    onClick={onSaveAllPredictions}
+                    style={{ marginBottom: "-14px" }}
+                >
+                    Desar tots els pronòstics d&apos;eliminatòries
+                </button>
+            </div >
 
             {renderRound("Setzens de final", 1, 16)}
             {renderRound("Vuitens de final", 17, 24)}

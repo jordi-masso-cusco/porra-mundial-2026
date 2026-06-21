@@ -22,8 +22,6 @@ export function AdminGroupStandings({ matches }: AdminGroupStandingsProps) {
 
     return (
         <>
-            <h2  className="section-title">Classificació real dels grups</h2>
-
             {Object.entries(groupStandings)
                 .sort(([groupA], [groupB]) => groupA.localeCompare(groupB))
                 .map(([groupName, rows]) => (

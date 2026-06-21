@@ -5,6 +5,8 @@ import {
     calculateRealGroupStandings,
 } from "@/lib/groupStandings";
 
+import { calculateRoundOf32QualificationPoints } from "@/lib/knockoutScoring";
+
 type StandingDetail = {
     matchName: string;
     prediction: string;
@@ -127,6 +129,31 @@ function calculateRows(
     }
 
     const realGroupStandings = calculateRealGroupStandings(matches);
+
+    for (const row of Object.values(standings)) {
+        const knockoutDetails = calculateRoundOf32QualificationPoints(
+            matches,
+            publicPredictions,
+            row.userName
+        );
+
+        const totalKnockoutPoints = knockoutDetails.reduce(
+            (sum, detail) => sum + detail.points,
+            0
+        );
+
+        if (totalKnockoutPoints > 0) {
+            row.points += totalKnockoutPoints;
+
+            row.details.push({
+                matchName: "Classificats a setzens",
+                prediction: "Equips classificats pronosticats",
+                result: "Equips classificats reals",
+                points: totalKnockoutPoints,
+                reason: `${knockoutDetails.length} equips classificats encertats`,
+            });
+        }
+    }
 
     for (const row of Object.values(standings)) {
         const predictedGroupStandings = calculatePredictedGroupStandings(
@@ -266,9 +293,9 @@ export function Standings({
                 return userGroup === groupName || userGroup === null || userGroup === undefined;
             });
 
-/*             const members = rows.filter(
-                (row) => userGroupByName.get(row.userName) === groupName
-            ); */
+            /*             const members = rows.filter(
+                            (row) => userGroupByName.get(row.userName) === groupName
+                        ); */
 
             const totalPoints = members.reduce((sum, row) => sum + row.points, 0);
             const averagePoints =

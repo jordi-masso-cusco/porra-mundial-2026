@@ -28,7 +28,7 @@ import { AdminAwards } from "@/components/AdminAwards";
 import { KnockoutBracket } from "@/components/KnockoutBracket";
 import { KnockoutPredictions } from "@/components/KnockoutPredictions";
 import { calculateRealGroupStandings } from "@/lib/groupStandings";
-import { resolveRoundOf32 } from "@/lib/knockout";
+import { generateBracketTree, resolveRoundOf32 } from "@/lib/knockout";
 import { PublicKnockoutPredictions } from "@/components/PublicKnockoutPredictions";
 import { AdminKnockoutResults } from "@/components/AdminKnockoutResults";
 import { supabase } from "@/lib/supabase";
@@ -767,7 +767,6 @@ export default function Home() {
 
     setKnockoutResults(resultsByMatch);
   }
-
   function updateKnockoutResult(
     matchId: number,
     field: "official_home" | "official_away" | "qualified_team",
@@ -787,6 +786,36 @@ export default function Home() {
         nextResult.qualified_team = value;
       } else {
         nextResult[field] = value === "" ? null : Number(value);
+      }
+
+      const groupStandings = calculateRealGroupStandings(matches);
+      const roundOf32Matches = resolveRoundOf32(groupStandings);
+
+      const resultPredictions = Object.fromEntries(
+        Object.values(current).map((result) => [
+          result.match_id,
+          { qualified_team: result.qualified_team },
+        ])
+      );
+
+      const bracket = generateBracketTree(roundOf32Matches, resultPredictions);
+      const knockoutMatch = bracket.matches.find((match) => match.id === matchId);
+
+      if (
+        knockoutMatch &&
+        nextResult.official_home !== null &&
+        nextResult.official_away !== null
+      ) {
+        if (nextResult.official_home > nextResult.official_away) {
+          nextResult.qualified_team = knockoutMatch.homeTeam;
+        } else if (nextResult.official_home < nextResult.official_away) {
+          nextResult.qualified_team = knockoutMatch.awayTeam;
+        } else if (
+          nextResult.qualified_team !== knockoutMatch.homeTeam &&
+          nextResult.qualified_team !== knockoutMatch.awayTeam
+        ) {
+          nextResult.qualified_team = null;
+        }
       }
 
       return {
@@ -1034,26 +1063,58 @@ export default function Home() {
 
       {tab === "admin" && currentUser.is_admin && (
         <>
-          <AdminResults
-            matches={matches}
-            onResultChange={updateOfficialResult}
-            onSaveResult={saveOfficialResult}
-          />
+          <details className="card" open>
+            <summary className="admin-section-summary">
+              Resultats oficials
+            </summary>
 
-          <AdminGroupStandings matches={matches} />
+            <div className="admin-section-content">
+              <AdminResults
+                matches={matches}
+                onResultChange={updateOfficialResult}
+                onSaveResult={saveOfficialResult}
+              />
+            </div>
+          </details>
 
-          <AdminKnockoutResults
-            matches={matches}
-            results={knockoutResults}
-            onResultChange={updateKnockoutResult}
-            onSaveResult={saveKnockoutResult}
-          />
+          <details className="card">
+            <summary className="admin-section-summary">
+              Classificació real dels grups
+            </summary>
 
-          <AdminAwards
-            results={awardResults}
-            onResultChange={updateAwardResult}
-            onSaveResult={saveAwardResult}
-          />
+            <div className="admin-section-content">
+              <AdminGroupStandings matches={matches} />
+            </div>
+          </details>
+
+          <details className="card">
+            <summary className="admin-section-summary">
+              Resultats oficials eliminatòries
+            </summary>
+
+            <div className="admin-section-content">
+              <AdminKnockoutResults
+                matches={matches}
+                results={knockoutResults}
+                onResultChange={updateKnockoutResult}
+                onSaveResult={saveKnockoutResult}
+              />
+            </div>
+          </details>
+
+          <details className="card">
+            <summary className="admin-section-summary">
+              Resultats oficials dels premis
+            </summary>
+
+            <div className="admin-section-content">
+              <AdminAwards
+                results={awardResults}
+                onResultChange={updateAwardResult}
+                onSaveResult={saveAwardResult}
+              />
+            </div>
+          </details>
         </>
       )}
     </main>

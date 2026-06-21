@@ -68,7 +68,6 @@ export function AdminKnockoutResults({
     return (
       <>
         <h3 className="subsection-title">{title}</h3>
-
         <div className="matches-grid">
           {visibleMatches.map((match) => {
             const result = results[match.id];
@@ -182,8 +181,6 @@ export function AdminKnockoutResults({
 
   return (
     <>
-      <h2 className="section-title">Resultats oficials eliminatòries</h2>
-
       {renderRound("Setzens de final", 1, 16)}
       {renderRound("Vuitens de final", 17, 24)}
       {renderRound("Quarts de final", 25, 28)}

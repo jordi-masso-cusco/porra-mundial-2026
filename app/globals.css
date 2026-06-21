@@ -624,3 +624,30 @@ input:disabled {
     font-size: 0.95rem;
   }
 }
+
+.admin-section-summary {
+  cursor: pointer;
+  list-style: none;
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: var(--foreground);
+}
+
+.admin-section-summary::-webkit-details-marker {
+  display: none;
+}
+
+.admin-section-summary::after {
+  content: "▼";
+  float: right;
+  color: var(--muted);
+  transition: transform 0.2s ease;
+}
+
+details:not([open])>.admin-section-summary::after {
+  transform: rotate(-90deg);
+}
+
+.admin-section-content {
+  margin-top: 16px;
+}

@@ -67,7 +67,6 @@ export function AdminResults({
 
     return (
         <>
-            <h2 className="section-title">Resultats oficials</h2>
 
             {pending.length > 0 && (
                 <>
