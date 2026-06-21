@@ -217,7 +217,7 @@ export function PublicPredictions({
                 <>
                     <h3 className="subsection-title">Partits jugats</h3>
                     <div className="matches-grid">
-                        {matchGroups.map((matchPredictions) => {
+                        {played.map((matchPredictions) => {
                             const match = matchPredictions[0]?.matches;
                             if (!match) return null;
 
@@ -285,7 +285,7 @@ export function PublicPredictions({
                 <>
                     <h3 className="subsection-title">Partits pendents</h3>
                     <div className="matches-grid">
-                        {matchGroups.map((matchPredictions) => {
+                        {pending.map((matchPredictions) => {
                             const match = matchPredictions[0]?.matches;
                             if (!match) return null;
 

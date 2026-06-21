@@ -21,6 +21,7 @@ import type {
   User,
   KnockoutPrediction,
   PublicKnockoutPrediction,
+  KnockoutResult,
 } from "@/types";
 import { PublicAwards } from "@/components/PublicAwards";
 import { AdminAwards } from "@/components/AdminAwards";
@@ -29,6 +30,7 @@ import { KnockoutPredictions } from "@/components/KnockoutPredictions";
 import { calculateRealGroupStandings } from "@/lib/groupStandings";
 import { resolveRoundOf32 } from "@/lib/knockout";
 import { PublicKnockoutPredictions } from "@/components/PublicKnockoutPredictions";
+import { AdminKnockoutResults } from "@/components/AdminKnockoutResults";
 import { supabase } from "@/lib/supabase";
 
 export default function Home() {
@@ -52,6 +54,9 @@ export default function Home() {
   const [publicKnockoutPredictions, setPublicKnockoutPredictions] = useState<
     PublicKnockoutPrediction[]
   >([]);
+  const [knockoutResults, setKnockoutResults] = useState<
+    Record<number, KnockoutResult>
+  >({});
   const groupStagePredictionDeadline = new Date("2026-06-13T17:00:00+02:00");
   const areGroupStagePredictionsClosed = new Date() >= groupStagePredictionDeadline;
   const lastGroupStageMatch = matches
@@ -92,6 +97,7 @@ export default function Home() {
       loadAwardPredictions(currentUser.id);
       loadPublicAwardPredictions();
       loadPublicKnockoutPredictions();
+      loadKnockoutResults();
       loadAwardResults();
     }
   }, [currentUser]);
@@ -743,6 +749,84 @@ export default function Home() {
     loadPublicKnockoutPredictions();
   }
 
+  async function loadKnockoutResults() {
+    const { data, error } = await supabase
+      .from("knockout_results")
+      .select("match_id, official_home, official_away, qualified_team");
+
+    if (error) {
+      setError("No s'han pogut carregar els resultats d'eliminatòries.");
+      return;
+    }
+
+    const resultsByMatch: Record<number, KnockoutResult> = {};
+
+    for (const result of data || []) {
+      resultsByMatch[result.match_id] = result;
+    }
+
+    setKnockoutResults(resultsByMatch);
+  }
+
+  function updateKnockoutResult(
+    matchId: number,
+    field: "official_home" | "official_away" | "qualified_team",
+    value: string
+  ) {
+    setKnockoutResults((current) => {
+      const currentResult = current[matchId];
+
+      const nextResult: KnockoutResult = {
+        match_id: matchId,
+        official_home: currentResult?.official_home ?? null,
+        official_away: currentResult?.official_away ?? null,
+        qualified_team: currentResult?.qualified_team ?? null,
+      };
+
+      if (field === "qualified_team") {
+        nextResult.qualified_team = value;
+      } else {
+        nextResult[field] = value === "" ? null : Number(value);
+      }
+
+      return {
+        ...current,
+        [matchId]: nextResult,
+      };
+    });
+  }
+
+  async function saveKnockoutResult(matchId: number) {
+    const result = knockoutResults[matchId];
+
+    if (
+      !result ||
+      result.official_home === null ||
+      result.official_away === null ||
+      !result.qualified_team
+    ) {
+      setError("Has d'indicar resultat i equip classificat.");
+      return;
+    }
+
+    const { error } = await supabase.from("knockout_results").upsert({
+      match_id: matchId,
+      official_home: result.official_home,
+      official_away: result.official_away,
+      qualified_team: result.qualified_team,
+      updated_at: new Date().toISOString(),
+    });
+
+    if (error) {
+      console.error(error);
+      setError(`No s'ha pogut desar el resultat d'eliminatòries: ${error.message}`);
+      return;
+    }
+
+    setSavedMessage("Resultat d'eliminatòries desat correctament.");
+    loadKnockoutResults();
+  }
+
   const filteredPublicPredictions =
     selectedGroup === "ALL" || selectedGroup === null
       ? publicPredictions
@@ -957,6 +1041,13 @@ export default function Home() {
           />
 
           <AdminGroupStandings matches={matches} />
+
+          <AdminKnockoutResults
+            matches={matches}
+            results={knockoutResults}
+            onResultChange={updateKnockoutResult}
+            onSaveResult={saveKnockoutResult}
+          />
 
           <AdminAwards
             results={awardResults}

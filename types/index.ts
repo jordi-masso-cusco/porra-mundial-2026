@@ -59,6 +59,13 @@ export type PublicKnockoutPrediction = {
     users: { name: string; group_name: string | null } | null;
 };
 
+export type KnockoutResult = {
+  match_id: number;
+  official_home: number | null;
+  official_away: number | null;
+  qualified_team: string | null;
+};
+
 export type Tab =
     | "mine"
     | "awards"

@@ -73,7 +73,7 @@ export function AdminResults({
                 <>
                     <h3 className="subsection-title">Partits pendents</h3>
                     <div className="matches-grid">
-                        {sortMatchesForAdmin(sortedMatches).map((match) => (
+                        {sortMatchesForAdmin(pending).map((match) => (
                             <div key={match.id} className="card">
                                 <div className="compact-match">
                                     <div className="team-left">
@@ -130,7 +130,7 @@ export function AdminResults({
                 <>
                     <h3 className="subsection-title">Partits jugats</h3>
                     <div className="matches-grid">
-                        {sortMatchesForAdmin(sortedMatches).map((match) => (
+                        {sortMatchesForAdmin(played).map((match) => (
                             <div key={match.id} className="card">
                                 <div className="compact-match">
                                     <div className="team-left">
