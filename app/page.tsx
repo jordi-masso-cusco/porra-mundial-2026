@@ -43,6 +43,20 @@ export default function Home() {
   const [savedMessage, setSavedMessage] = useState("");
   const groupStagePredictionDeadline = new Date("2026-06-13T17:00:00+02:00");
   const areGroupStagePredictionsClosed = new Date() >= groupStagePredictionDeadline;
+  const lastGroupStageMatch = matches
+    .filter((match) => match.group_name)
+    .sort(
+      (a, b) =>
+        new Date(b.kickoff).getTime() - new Date(a.kickoff).getTime()
+    )[0];
+
+  const firstKnockoutMatchKickoff = new Date("2026-06-28T21:00:00");
+
+  const areKnockoutPredictionsOpen =
+    !!lastGroupStageMatch &&
+    new Date() >=
+    new Date(new Date(lastGroupStageMatch.kickoff).getTime() + 2 * 60 * 60 * 1000) &&
+    new Date() < firstKnockoutMatchKickoff;
   const [awardPredictions, setAwardPredictions] = useState<
     Record<string, AwardPrediction>
   >({});
@@ -813,6 +827,7 @@ export default function Home() {
           <KnockoutPredictions
             matches={matches}
             predictions={knockoutPredictions}
+            predictionsOpen={areKnockoutPredictionsOpen}
             onPredictionChange={updateKnockoutPrediction}
             onSaveAllPredictions={saveAllKnockoutPredictions}
           />

@@ -12,6 +12,7 @@ type KnockoutPredictionsProps = {
         value: string
     ) => void;
     onSaveAllPredictions: () => void;
+    predictionsOpen: boolean;
 };
 
 function Flag({ team }: { team: string }) {
@@ -39,10 +40,12 @@ type BracketMatch = ReturnType<typeof generateBracketTree>["matches"][number];
 function KnockoutPredictionCard({
     match,
     prediction,
+    predictionsOpen,
     onPredictionChange,
 }: {
     match: BracketMatch;
     prediction?: KnockoutPrediction;
+    predictionsOpen: boolean;
     onPredictionChange: KnockoutPredictionsProps["onPredictionChange"];
 }) {
     const homePrediction = prediction?.predicted_home ?? "";
@@ -77,7 +80,7 @@ function KnockoutPredictionCard({
                         className="score-input"
                         type="number"
                         min="0"
-                        disabled={!teamsAreResolved}
+                        disabled={!teamsAreResolved || !predictionsOpen}
                         value={homePrediction}
                         onChange={(e) =>
                             onPredictionChange(match.id, "predicted_home", e.target.value)
@@ -90,7 +93,7 @@ function KnockoutPredictionCard({
                         className="score-input"
                         type="number"
                         min="0"
-                        disabled={!teamsAreResolved}
+                        disabled={!teamsAreResolved || !predictionsOpen}
                         value={awayPrediction}
                         onChange={(e) =>
                             onPredictionChange(match.id, "predicted_away", e.target.value)
@@ -112,7 +115,7 @@ function KnockoutPredictionCard({
 
                     <select
                         value={qualifiedTeam}
-                        disabled={!teamsAreResolved}
+                        disabled={!teamsAreResolved || !predictionsOpen}
                         onChange={(e) =>
                             onPredictionChange(match.id, "qualified_team", e.target.value)
                         }
@@ -146,6 +149,7 @@ function KnockoutPredictionCard({
 export function KnockoutPredictions({
     matches,
     predictions,
+    predictionsOpen,
     onPredictionChange,
     onSaveAllPredictions,
 }: KnockoutPredictionsProps) {
@@ -174,6 +178,7 @@ export function KnockoutPredictions({
                             key={match.id}
                             match={match}
                             prediction={predictions[match.id]}
+                            predictionsOpen={predictionsOpen}
                             onPredictionChange={onPredictionChange}
                         />
                     ))}
@@ -186,12 +191,22 @@ export function KnockoutPredictions({
         <>
             <h2 className="section-title">Pronòstics d’eliminatòries</h2>
 
+            {!predictionsOpen && (
+                <p className="error">
+                    Els pronòstics d’eliminatòries encara no estan oberts o ja estan tancats.
+                </p>
+            )}
+
             <p className="muted">
                 Introdueix el resultat als 90 minuts. Si hi ha empat, tria quin equip es
                 classifica.
             </p>
 
-            <button onClick={onSaveAllPredictions} style={{ marginBottom: "16px" }}>
+            <button
+                disabled={!predictionsOpen}
+                onClick={onSaveAllPredictions}
+                style={{ marginBottom: "16px" }}
+            >
                 Desar tots els pronòstics d&apos;eliminatòries
             </button>
 
