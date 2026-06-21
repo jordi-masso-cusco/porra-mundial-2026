@@ -19,6 +19,7 @@ const tabs: {
         { key: "groups", label: "Grups", publicOnlyAfterClose: true },
         { key: "publicAwards", label: "Premis dels altres", publicOnlyAfterClose: true },
         { key: "standings", label: "Classificació" },
+        { key: "knockout", label: "Eliminatòries", publicOnlyAfterClose: true },
         { key: "admin", label: "Admin", adminOnly: true },
     ];
 

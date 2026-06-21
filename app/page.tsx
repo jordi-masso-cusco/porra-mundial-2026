@@ -22,6 +22,7 @@ import type {
 } from "@/types";
 import { PublicAwards } from "@/components/PublicAwards";
 import { AdminAwards } from "@/components/AdminAwards";
+import { KnockoutBracket } from "@/components/KnockoutBracket";
 import { supabase } from "@/lib/supabase";
 
 export default function Home() {
@@ -663,6 +664,8 @@ export default function Home() {
           awardResults={awardResults}
         />
       )}
+
+      {tab === "knockout" && <KnockoutBracket matches={matches} />}
 
       {tab === "admin" && currentUser.is_admin && (
         <>

@@ -51,4 +51,5 @@ export type Tab =
     | "groups"
     | "others"
     | "standings"
+    | "knockout"
     | "admin";

@@ -266,6 +266,10 @@ export function Standings({
                 return userGroup === groupName || userGroup === null || userGroup === undefined;
             });
 
+/*             const members = rows.filter(
+                (row) => userGroupByName.get(row.userName) === groupName
+            ); */
+
             const totalPoints = members.reduce((sum, row) => sum + row.points, 0);
             const averagePoints =
                 members.length > 0 ? totalPoints / members.length : 0;
