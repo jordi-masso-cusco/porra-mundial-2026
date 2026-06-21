@@ -14,12 +14,8 @@ const tabs: {
     publicOnlyAfterClose?: boolean;
 }[] = [
         { key: "mine", label: "Pronòstics" },
-        { key: "awards", label: "Premis" },
         { key: "others", label: "Porres", publicOnlyAfterClose: true },
-        { key: "groups", label: "Grups", publicOnlyAfterClose: true },
-        { key: "publicAwards", label: "Premis dels altres", publicOnlyAfterClose: true },
         { key: "standings", label: "Classificació" },
-        { key: "knockout", label: "Eliminatòries", publicOnlyAfterClose: true },
         { key: "admin", label: "Admin", adminOnly: true },
     ];
 

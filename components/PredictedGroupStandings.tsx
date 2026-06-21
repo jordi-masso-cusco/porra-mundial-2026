@@ -35,7 +35,7 @@ export function PredictedGroupStandings({
 
     return (
         <>
-            <h2>Classificacions de grup pronosticades</h2>
+            <h2  className="section-title">Classificacions de grup pronosticades</h2>
 
             {users.map((userName) => {
                 if (!userName) return null;

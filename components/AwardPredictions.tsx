@@ -30,7 +30,7 @@ export function AwardPredictions({
 }: AwardPredictionsProps) {
     return (
         <>
-            <h2>Premis individuals</h2>
+            <h2  className="section-title">Premis individuals</h2>
 
             {predictionsClosed && (
                 <p className="error">

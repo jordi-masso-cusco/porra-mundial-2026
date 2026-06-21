@@ -59,7 +59,7 @@ export function PublicAwards({
 
     return (
         <>
-            <h2>Premis individuals pronosticats</h2>
+            <h2  className="section-title">Premis individuals pronosticats</h2>
 
             {publicAwardPredictions.length === 0 && (
                 <p>Encara no hi ha premis individuals pronosticats.</p>

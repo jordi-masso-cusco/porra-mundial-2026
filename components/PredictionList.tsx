@@ -1,6 +1,7 @@
 import type { Match, Prediction } from "@/types";
 import { flagUrl } from "@/lib/flags";
 import { getQualifiedTeams } from "@/lib/groupStandings";
+import { sortMatchesForDisplay } from "@/lib/matches";
 
 type PredictionListProps = {
     matches: Match[];
@@ -151,7 +152,7 @@ export function PredictionList({
 
     return (
         <>
-            <h2>Els meus pronòstics</h2>
+            <h2  className="section-title">Els meus pronòstics</h2>
 
             {predictionsClosed && (
                 <p className="error">
@@ -180,7 +181,7 @@ export function PredictionList({
                             <h3>Grup {groupName}</h3>
 
                             <div className="matches-grid">
-                                {groupMatches.map((match) => {
+                                {sortMatchesForDisplay(matches).map((match) => {
                                     const prediction = predictions[match.id];
                                     const matchLocked =
                                         predictionsClosed || isExceptionMatchLocked(match);

@@ -7,7 +7,7 @@ export function GroupPredictions({
 }: GroupPredictionsProps) {
   return (
     <>
-      <h2>Classificació dels grups</h2>
+      <h2  className="section-title">Classificació dels grups</h2>
 
       {Object.entries(groups).map(([groupName, teams]) => (
         <div

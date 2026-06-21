@@ -285,7 +285,7 @@ export function Standings({
 
     return (
         <>
-            <h2>Classificació per equips</h2>
+            <h2 className="section-title">Classificació per equips</h2>
 
             <div className="team-standings-card">
                 {teamStandings.map((team, index) => (
@@ -306,7 +306,7 @@ export function Standings({
                 ))}
             </div>
 
-            <h2>Classificació individual</h2>
+            <h2 className="section-title">Classificació individual</h2>
 
             {rows.length === 0 && (
                 <p>Encara no hi ha punts perquè falten resultats oficials.</p>

@@ -91,11 +91,69 @@ function groupPredictionsByMatch(predictions: PublicPrediction[]) {
     }
 
     return Object.values(matches).sort((a, b) => {
-        const kickoffA = a[0]?.matches?.kickoff ?? "";
-        const kickoffB = b[0]?.matches?.kickoff ?? "";
+        const matchA = a[0]?.matches;
+        const matchB = b[0]?.matches;
 
-        return new Date(kickoffA).getTime() - new Date(kickoffB).getTime();
+        const matchAPlayed =
+            matchA?.home_score !== null &&
+            matchA?.home_score !== undefined &&
+            matchA?.away_score !== null &&
+            matchA?.away_score !== undefined;
+
+        const matchBPlayed =
+            matchB?.home_score !== null &&
+            matchB?.home_score !== undefined &&
+            matchB?.away_score !== null &&
+            matchB?.away_score !== undefined;
+
+        const kickoffA = new Date(matchA?.kickoff ?? "").getTime();
+        const kickoffB = new Date(matchB?.kickoff ?? "").getTime();
+
+        if (matchAPlayed && !matchBPlayed) return -1;
+        if (!matchAPlayed && matchBPlayed) return 1;
+
+        if (matchAPlayed && matchBPlayed) {
+            return kickoffB - kickoffA;
+        }
+
+        return kickoffA - kickoffB;
     });
+}
+
+function splitPredictionGroupsByStatus(matchGroups: PublicPrediction[][]) {
+    const played = matchGroups
+        .filter((group) => {
+            const match = group[0]?.matches;
+            return (
+                match?.home_score !== null &&
+                match?.home_score !== undefined &&
+                match?.away_score !== null &&
+                match?.away_score !== undefined
+            );
+        })
+        .sort(
+            (a, b) =>
+                new Date(b[0]?.matches?.kickoff ?? "").getTime() -
+                new Date(a[0]?.matches?.kickoff ?? "").getTime()
+        );
+
+    const pending = matchGroups
+        .filter((group) => {
+            const match = group[0]?.matches;
+            return (
+                match?.home_score === null ||
+                match?.home_score === undefined ||
+                match?.away_score === null ||
+                match?.away_score === undefined
+            );
+        })
+        .sort(
+            (a, b) =>
+                new Date(a[0]?.matches?.kickoff ?? "").getTime() -
+                new Date(b[0]?.matches?.kickoff ?? "").getTime()
+        );
+
+    return { played, pending };
 }
 
 export function PublicPredictions({
@@ -119,10 +177,11 @@ export function PublicPredictions({
             );
 
     const matchGroups = groupPredictionsByMatch(filteredPredictions);
+    const { played, pending } = splitPredictionGroupsByStatus(matchGroups);
 
     return (
         <>
-            <h2>Porres dels altres</h2>
+            <h2 className="section-title">Porres dels altres</h2>
 
             {publicPredictions.length === 0 && <p>Encara no hi ha pronòstics.</p>}
 
@@ -154,68 +213,142 @@ export function PublicPredictions({
                 </div>
             )}
 
-            <div className="matches-grid">
-                {matchGroups.map((matchPredictions) => {
-                    const match = matchPredictions[0]?.matches;
-                    if (!match) return null;
+            {played.length > 0 && (
+                <>
+                    <h3 className="subsection-title">Partits jugats</h3>
+                    <div className="matches-grid">
+                        {matchGroups.map((matchPredictions) => {
+                            const match = matchPredictions[0]?.matches;
+                            if (!match) return null;
 
-                    const officialResultAvailable = hasOfficialResult(matchPredictions[0]);
+                            const officialResultAvailable = hasOfficialResult(matchPredictions[0]);
 
-                    return (
-                        <details key={match.id} className="card public-match-card">
-                            <summary className="public-match-summary">
-                                <div className="compact-match">
-                                    <div className="team-left">
-                                        <TeamName team={match.home_team} />
-                                    </div>
+                            return (
+                                <details key={match.id} className="card public-match-card">
+                                    <summary className="public-match-summary">
+                                        <div className="compact-match">
+                                            <div className="team-left">
+                                                <TeamName team={match.home_team} />
+                                            </div>
 
-                                    <div className="score-center">
-                                        {officialResultAvailable ? (
-                                            <strong>
-                                                {match.home_score} - {match.away_score}
-                                            </strong>
-                                        ) : (
-                                            <span className="badge">Pendent</span>
-                                        )}
-                                    </div>
+                                            <div className="score-center">
+                                                {officialResultAvailable ? (
+                                                    <strong>
+                                                        {match.home_score} - {match.away_score}
+                                                    </strong>
+                                                ) : (
+                                                    <span className="badge">Pendent</span>
+                                                )}
+                                            </div>
 
-                                    <div className="team-right">
-                                        <TeamName team={match.away_team} />
-                                    </div>
-                                </div>
-
-                                <div className="match-footer">
-                                    <span>{formatKickoff(match.kickoff)}</span>
-                                    <span>Veure porres</span>
-                                </div>
-                            </summary>
-
-                            <div className="public-predictions-list">
-                                {matchPredictions.map((prediction, index) => {
-                                    const points = getPredictionPoints(prediction);
-
-                                    return (
-                                        <div key={index} className="public-prediction-row">
-                                            <span>{prediction.users?.name}</span>
-
-                                            <strong>
-                                                {prediction.predicted_home} -{" "}
-                                                {prediction.predicted_away}
-                                            </strong>
-
-                                            {points !== null && points > 0 ? (
-                                                <span className="badge">+{points}</span>
-                                            ) : (
-                                                <span />
-                                            )}
+                                            <div className="team-right">
+                                                <TeamName team={match.away_team} />
+                                            </div>
                                         </div>
-                                    );
-                                })}
-                            </div>
-                        </details>
-                    );
-                })}
-            </div>
+
+                                        <div className="match-footer">
+                                            <span>{formatKickoff(match.kickoff)}</span>
+                                            <span>Veure porres</span>
+                                        </div>
+                                    </summary>
+
+                                    <div className="public-predictions-list">
+                                        {matchPredictions.map((prediction, index) => {
+                                            const points = getPredictionPoints(prediction);
+
+                                            return (
+                                                <div key={index} className="public-prediction-row">
+                                                    <span>{prediction.users?.name}</span>
+
+                                                    <strong>
+                                                        {prediction.predicted_home} -{" "}
+                                                        {prediction.predicted_away}
+                                                    </strong>
+
+                                                    {points !== null && points > 0 ? (
+                                                        <span className="badge">+{points}</span>
+                                                    ) : (
+                                                        <span />
+                                                    )}
+                                                </div>
+                                            );
+                                        })}
+                                    </div>
+                                </details>
+                            );
+                        })}
+                    </div>
+                </>
+            )}
+
+            {pending.length > 0 && (
+                <>
+                    <h3 className="subsection-title">Partits pendents</h3>
+                    <div className="matches-grid">
+                        {matchGroups.map((matchPredictions) => {
+                            const match = matchPredictions[0]?.matches;
+                            if (!match) return null;
+
+                            const officialResultAvailable = hasOfficialResult(matchPredictions[0]);
+
+                            return (
+                                <details key={match.id} className="card public-match-card">
+                                    <summary className="public-match-summary">
+                                        <div className="compact-match">
+                                            <div className="team-left">
+                                                <TeamName team={match.home_team} />
+                                            </div>
+
+                                            <div className="score-center">
+                                                {officialResultAvailable ? (
+                                                    <strong>
+                                                        {match.home_score} - {match.away_score}
+                                                    </strong>
+                                                ) : (
+                                                    <span className="badge">Pendent</span>
+                                                )}
+                                            </div>
+
+                                            <div className="team-right">
+                                                <TeamName team={match.away_team} />
+                                            </div>
+                                        </div>
+
+                                        <div className="match-footer">
+                                            <span>{formatKickoff(match.kickoff)}</span>
+                                            <span>Veure porres</span>
+                                        </div>
+                                    </summary>
+
+                                    <div className="public-predictions-list">
+                                        {matchPredictions.map((prediction, index) => {
+                                            const points = getPredictionPoints(prediction);
+
+                                            return (
+                                                <div key={index} className="public-prediction-row">
+                                                    <span>{prediction.users?.name}</span>
+
+                                                    <strong>
+                                                        {prediction.predicted_home} -{" "}
+                                                        {prediction.predicted_away}
+                                                    </strong>
+
+                                                    {points !== null && points > 0 ? (
+                                                        <span className="badge">+{points}</span>
+                                                    ) : (
+                                                        <span />
+                                                    )}
+                                                </div>
+                                            );
+                                        })}
+                                    </div>
+                                </details>
+                            );
+                        })}
+                    </div>
+                </>
+            )}
+
         </>
     );
 }

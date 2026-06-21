@@ -20,6 +20,7 @@ import type {
   Tab,
   User,
   KnockoutPrediction,
+  PublicKnockoutPrediction,
 } from "@/types";
 import { PublicAwards } from "@/components/PublicAwards";
 import { AdminAwards } from "@/components/AdminAwards";
@@ -27,6 +28,7 @@ import { KnockoutBracket } from "@/components/KnockoutBracket";
 import { KnockoutPredictions } from "@/components/KnockoutPredictions";
 import { calculateRealGroupStandings } from "@/lib/groupStandings";
 import { resolveRoundOf32 } from "@/lib/knockout";
+import { PublicKnockoutPredictions } from "@/components/PublicKnockoutPredictions";
 import { supabase } from "@/lib/supabase";
 
 export default function Home() {
@@ -41,6 +43,15 @@ export default function Home() {
   >([]);
   const [error, setError] = useState("");
   const [savedMessage, setSavedMessage] = useState("");
+  const [predictionSection, setPredictionSection] = useState<
+    "groups" | "awards" | "knockout"
+  >("groups");
+  const [publicSection, setPublicSection] = useState<
+    "matches" | "groups" | "awards" | "knockout"
+  >("matches");
+  const [publicKnockoutPredictions, setPublicKnockoutPredictions] = useState<
+    PublicKnockoutPrediction[]
+  >([]);
   const groupStagePredictionDeadline = new Date("2026-06-13T17:00:00+02:00");
   const areGroupStagePredictionsClosed = new Date() >= groupStagePredictionDeadline;
   const lastGroupStageMatch = matches
@@ -80,6 +91,7 @@ export default function Home() {
       loadPublicPredictions();
       loadAwardPredictions(currentUser.id);
       loadPublicAwardPredictions();
+      loadPublicKnockoutPredictions();
       loadAwardResults();
     }
   }, [currentUser]);
@@ -251,6 +263,31 @@ export default function Home() {
     }
 
     setPublicPredictions(allPredictions);
+  }
+
+  async function loadPublicKnockoutPredictions() {
+    const { data, error } = await supabase
+      .from("knockout_predictions")
+      .select(`
+      match_id,
+      predicted_home,
+      predicted_away,
+      qualified_team,
+      users (
+        name,
+        group_name
+      )
+    `)
+      .range(0, 10000);
+
+    if (error) {
+      setError("No s'han pogut carregar les eliminatòries dels altres.");
+      return;
+    }
+
+    setPublicKnockoutPredictions(
+      (data ?? []) as unknown as PublicKnockoutPrediction[]
+    );
   }
 
   function updatePrediction(
@@ -666,6 +703,7 @@ export default function Home() {
     }
 
     setSavedMessage("Pronòstic d'eliminatòries desat correctament.");
+    loadPublicKnockoutPredictions();
   }
 
   async function saveAllKnockoutPredictions() {
@@ -702,6 +740,7 @@ export default function Home() {
     }
 
     setSavedMessage("Pronòstics d'eliminatòries desats correctament.");
+    loadPublicKnockoutPredictions();
   }
 
   const filteredPublicPredictions =
@@ -717,6 +756,15 @@ export default function Home() {
     selectedGroup === "ALL" || selectedGroup === null
       ? publicAwardPredictions
       : publicAwardPredictions.filter(
+        (prediction) =>
+          prediction.users?.group_name === selectedGroup ||
+          prediction.users?.group_name === null
+      );
+
+  const filteredPublicKnockoutPredictions =
+    selectedGroup === "ALL" || selectedGroup === null
+      ? publicKnockoutPredictions
+      : publicKnockoutPredictions.filter(
         (prediction) =>
           prediction.users?.group_name === selectedGroup ||
           prediction.users?.group_name === null
@@ -775,40 +823,118 @@ export default function Home() {
       {savedMessage && <p className="success">{savedMessage}</p>}
 
       {tab === "mine" && (
-        <PredictionList
-          matches={matches}
-          predictions={predictions}
-          predictionsClosed={areGroupStagePredictionsClosed}
-          onPredictionChange={updatePrediction}
-          onSaveAllPredictions={saveAllPredictions}
-        />
-      )}
+        <>
+          <div className="tabs" style={{ marginBottom: "16px" }}>
+            <button
+              className={predictionSection === "groups" ? "tab active" : "tab"}
+              onClick={() => setPredictionSection("groups")}
+            >
+              Fase de Grups
+            </button>
 
-      {tab === "awards" && (
-        <AwardPredictions
-          predictions={awardPredictions}
-          predictionsClosed={areGroupStagePredictionsClosed}
-          onAwardChange={updateAwardPrediction}
-          onSaveAward={saveAwardPrediction}
-        />
-      )}
+            <button
+              className={predictionSection === "awards" ? "tab active" : "tab"}
+              onClick={() => setPredictionSection("awards")}
+            >
+              Premis
+            </button>
 
-      {tab === "publicAwards" && (
-        <PublicAwards
-          publicAwardPredictions={filteredPublicAwardPredictions}
-          awardResults={awardResults}
-        />
-      )}
+            <button
+              className={predictionSection === "knockout" ? "tab active" : "tab"}
+              onClick={() => setPredictionSection("knockout")}
+            >
+              Eliminatòries
+            </button>
+          </div>
 
-      {tab === "groups" && (
-        <PredictedGroupStandings
-          matches={matches}
-          publicPredictions={filteredPublicPredictions}
-        />
+          {predictionSection === "groups" && (
+            <PredictionList
+              matches={matches}
+              predictions={predictions}
+              predictionsClosed={areGroupStagePredictionsClosed}
+              onPredictionChange={updatePrediction}
+              onSaveAllPredictions={saveAllPredictions}
+            />
+          )}
+
+          {predictionSection === "awards" && (
+            <AwardPredictions
+              predictions={awardPredictions}
+              predictionsClosed={areGroupStagePredictionsClosed}
+              onAwardChange={updateAwardPrediction}
+              onSaveAward={saveAwardPrediction}
+            />
+          )}
+
+          {predictionSection === "knockout" && (
+            <KnockoutPredictions
+              matches={matches}
+              predictions={knockoutPredictions}
+              predictionsOpen={areKnockoutPredictionsOpen}
+              onPredictionChange={updateKnockoutPrediction}
+              onSaveAllPredictions={saveAllKnockoutPredictions}
+            />
+          )}
+        </>
       )}
 
       {tab === "others" && (
-        <PublicPredictions publicPredictions={filteredPublicPredictions} />
+        <>
+          <div className="tabs" style={{ marginBottom: "16px" }}>
+            <button
+              className={publicSection === "matches" ? "tab active" : "tab"}
+              onClick={() => setPublicSection("matches")}
+            >
+              Fase de Grups
+            </button>
+
+            <button
+              className={publicSection === "groups" ? "tab active" : "tab"}
+              onClick={() => setPublicSection("groups")}
+            >
+              Grups
+            </button>
+
+            <button
+              className={publicSection === "awards" ? "tab active" : "tab"}
+              onClick={() => setPublicSection("awards")}
+            >
+              Premis
+            </button>
+
+            <button
+              className={publicSection === "knockout" ? "tab active" : "tab"}
+              onClick={() => setPublicSection("knockout")}
+            >
+              Eliminatòries
+            </button>
+          </div>
+
+          {publicSection === "matches" && (
+            <PublicPredictions publicPredictions={filteredPublicPredictions} />
+          )}
+
+          {publicSection === "groups" && (
+            <PredictedGroupStandings
+              matches={matches}
+              publicPredictions={filteredPublicPredictions}
+            />
+          )}
+
+          {publicSection === "awards" && (
+            <PublicAwards
+              publicAwardPredictions={filteredPublicAwardPredictions}
+              awardResults={awardResults}
+            />
+          )}
+
+          {publicSection === "knockout" && (
+            <PublicKnockoutPredictions
+              matches={matches}
+              publicKnockoutPredictions={filteredPublicKnockoutPredictions}
+            />
+          )}
+        </>
       )}
 
       {tab === "standings" && (
@@ -820,18 +946,6 @@ export default function Home() {
           allPublicAwardPredictions={publicAwardPredictions}
           awardResults={awardResults}
         />
-      )}
-
-      {tab === "knockout" && (
-        <>
-          <KnockoutPredictions
-            matches={matches}
-            predictions={knockoutPredictions}
-            predictionsOpen={areKnockoutPredictionsOpen}
-            onPredictionChange={updateKnockoutPrediction}
-            onSaveAllPredictions={saveAllKnockoutPredictions}
-          />
-        </>
       )}
 
       {tab === "admin" && currentUser.is_admin && (

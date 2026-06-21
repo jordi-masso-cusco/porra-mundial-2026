@@ -564,3 +564,63 @@ input:disabled {
   font-weight: 700;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
 }
+
+.subsection-title {
+  display: inline-block;
+  margin: 18px 0 10px;
+  padding: 6px 10px;
+  border-radius: 10px;
+  background: linear-gradient(135deg, #1d4ed8, #0f172a);
+  color: white;
+  font-size: 1rem;
+  font-weight: 700;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+}
+
+.public-knockout-card {
+  background: #f9fafb;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 12px;
+  margin-bottom: 10px;
+}
+
+.public-knockout-card .compact-match {
+  grid-template-columns: 1fr auto 1fr;
+}
+
+.public-knockout-card .team-left,
+.public-knockout-card .team-right {
+  min-width: 0;
+}
+
+.public-knockout-card .team-left span,
+.public-knockout-card .team-right span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.public-knockout-card .score-center {
+  font-size: 1rem;
+  font-weight: 700;
+}
+
+@media (max-width: 640px) {
+  .public-knockout-card {
+    padding: 10px;
+  }
+
+  .public-knockout-card .compact-match {
+    gap: 8px;
+  }
+
+  .public-knockout-card .team-left,
+  .public-knockout-card .team-right {
+    font-size: 0.85rem;
+  }
+
+  .public-knockout-card .score-center {
+    font-size: 0.95rem;
+  }
+}

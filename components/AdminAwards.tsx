@@ -22,7 +22,7 @@ export function AdminAwards({
 }: AdminAwardsProps) {
     return (
         <>
-            <h2>Resultats oficials dels premis</h2>
+            <h2 className="section-title">Resultats oficials dels premis</h2>
 
             {awards.map((award) => {
                 const result = results[award.key];
