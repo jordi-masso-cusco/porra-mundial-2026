@@ -1,31 +1,177 @@
-export type KnockoutMatchSlot = {
+import type { TeamStanding } from "@/lib/groupStandings";
+
+export type BracketResolvedMatch = {
     id: number;
-    homeSlot: string;
-    awaySlot: string;
-    side: "left" | "right";
+    label: string;
+    homeTeam: string;
+    awayTeam: string;
+    winner: string | null;
+    kickoff: string;
+    side: "left" | "right" | "center";
+};
+
+export type KnockoutMatchSlot = {
+  id: number;
+  homeSlot: string;
+  awaySlot: string;
+  side: "left" | "right";
+  kickoff: string;
 };
 
 export const roundOf32Slots: KnockoutMatchSlot[] = [
-    { id: 73, homeSlot: "1E", awaySlot: "3ABCDF", side: "left" },
-    { id: 74, homeSlot: "1I", awaySlot: "3CDFGH", side: "left" },
-    { id: 75, homeSlot: "2A", awaySlot: "2B", side: "left" },
-    { id: 76, homeSlot: "1F", awaySlot: "2C", side: "left" },
-    { id: 77, homeSlot: "2K", awaySlot: "2L", side: "left" },
-    { id: 78, homeSlot: "1H", awaySlot: "2J", side: "left" },
-    { id: 79, homeSlot: "1D", awaySlot: "3BEFIJ", side: "left" },
-    { id: 80, homeSlot: "1G", awaySlot: "3AEHIJ", side: "left" },
+    // Costat esquerre
+    {
+        id: 1,
+        homeSlot: "2A",
+        awaySlot: "2B",
+        side: "left",
+        kickoff: "2026-06-28T21:00:00",
+    },
+    {
+        id: 3,
+        homeSlot: "1E",
+        awaySlot: "3ABCDF",
+        side: "left",
+        kickoff: "2026-06-29T22:30:00",
+    },
+    {
+        id: 2,
+        homeSlot: "1C",
+        awaySlot: "2F",
+        side: "left",
+        kickoff: "2026-06-29T19:00:00",
+    },
+    {
+        id: 5,
+        homeSlot: "2E",
+        awaySlot: "2I",
+        side: "left",
+        kickoff: "2026-06-30T19:00:00",
+    },
+    {
+        id: 11,
+        homeSlot: "1H",
+        awaySlot: "2J",
+        side: "left",
+        kickoff: "2026-07-02T21:00:00",
+    },
+    {
+        id: 12,
+        homeSlot: "2K",
+        awaySlot: "2L",
+        side: "left",
+        kickoff: "2026-07-03T01:00:00",
+    },
+    {
+        id: 9,
+        homeSlot: "1G",
+        awaySlot: "3AEHIJ",
+        side: "left",
+        kickoff: "2026-07-01T22:00:00",
+    },
+    {
+        id: 10,
+        homeSlot: "1D",
+        awaySlot: "3BEFIJ",
+        side: "left",
+        kickoff: "2026-07-02T02:00:00",
+    },
 
-    { id: 81, homeSlot: "1C", awaySlot: "2F", side: "right" },
-    { id: 82, homeSlot: "2E", awaySlot: "2I", side: "right" },
-    { id: 83, homeSlot: "1A", awaySlot: "3CEFHI", side: "right" },
-    { id: 84, homeSlot: "1L", awaySlot: "3EHIJK", side: "right" },
-    { id: 85, homeSlot: "1J", awaySlot: "2H", side: "right" },
-    { id: 86, homeSlot: "2D", awaySlot: "2G", side: "right" },
-    { id: 87, homeSlot: "1B", awaySlot: "3EFGIJ", side: "right" },
-    { id: 88, homeSlot: "1K", awaySlot: "3DEIJL", side: "right" },
+    // Costat dret
+    {
+        id: 4,
+        homeSlot: "1F",
+        awaySlot: "2C",
+        side: "right",
+        kickoff: "2026-06-30T03:00:00",
+    },
+    {
+        id: 6,
+        homeSlot: "1I",
+        awaySlot: "3CDFGH",
+        side: "right",
+        kickoff: "2026-06-30T23:00:00",
+    },
+    {
+        id: 7,
+        homeSlot: "1A",
+        awaySlot: "3CEFHI",
+        side: "right",
+        kickoff: "2026-07-01T03:00:00",
+    },
+    {
+        id: 8,
+        homeSlot: "1L",
+        awaySlot: "3EHIJK",
+        side: "right",
+        kickoff: "2026-07-01T18:00:00",
+    },
+    {
+        id: 14,
+        homeSlot: "2D",
+        awaySlot: "2G",
+        side: "right",
+        kickoff: "2026-07-03T20:00:00",
+    },
+    {
+        id: 16,
+        homeSlot: "1K",
+        awaySlot: "3DEIJL",
+        side: "right",
+        kickoff: "2026-07-04T03:30:00",
+    },
+    {
+        id: 13,
+        homeSlot: "1B",
+        awaySlot: "3EFGIJ",
+        side: "right",
+        kickoff: "2026-07-03T05:00:00",
+    },
+    {
+        id: 15,
+        homeSlot: "1J",
+        awaySlot: "2H",
+        side: "right",
+        kickoff: "2026-07-04T00:00:00",
+    },
 ];
 
-import type { TeamStanding } from "@/lib/groupStandings";
+export type KnockoutRound = {
+    id: number;
+    label: string;
+    homeSource: string;
+    awaySource: string;
+    kickoff: string;
+    side: "left" | "right" | "center";
+};
+
+export const knockoutRounds: KnockoutRound[] = [
+    // Vuitens
+    { id: 17, label: "Vuitens 1", homeSource: "G1", awaySource: "G3", kickoff: "2026-07-04T19:00:00", side: "left" },
+    { id: 18, label: "Vuitens 2", homeSource: "G2", awaySource: "G5", kickoff: "2026-07-04T23:00:00", side: "left" },
+    { id: 19, label: "Vuitens 3", homeSource: "G4", awaySource: "G6", kickoff: "2026-07-05T22:00:00", side: "right" },
+    { id: 20, label: "Vuitens 4", homeSource: "G7", awaySource: "G8", kickoff: "2026-07-06T02:00:00", side: "right" },
+    { id: 21, label: "Vuitens 5", homeSource: "G11", awaySource: "G12", kickoff: "2026-07-06T21:00:00", side: "left" },
+    { id: 22, label: "Vuitens 6", homeSource: "G9", awaySource: "G10", kickoff: "2026-07-07T02:00:00", side: "left" },
+    { id: 23, label: "Vuitens 7", homeSource: "G14", awaySource: "G16", kickoff: "2026-07-07T18:00:00", side: "right" },
+    { id: 24, label: "Vuitens 8", homeSource: "G13", awaySource: "G15", kickoff: "2026-07-07T22:00:00", side: "right" },
+
+    // Quarts
+    { id: 25, label: "Quarts 1", homeSource: "G17", awaySource: "G18", kickoff: "2026-07-09T22:00:00", side: "left" },
+    { id: 26, label: "Quarts 2", homeSource: "G21", awaySource: "G22", kickoff: "2026-07-10T21:00:00", side: "left" },
+    { id: 27, label: "Quarts 3", homeSource: "G19", awaySource: "G20", kickoff: "2026-07-11T23:00:00", side: "right" },
+    { id: 28, label: "Quarts 4", homeSource: "G23", awaySource: "G24", kickoff: "2026-07-12T03:00:00", side: "right" },
+
+    // Semifinals
+    { id: 29, label: "Semifinal 1", homeSource: "G25", awaySource: "G26", kickoff: "2026-07-14T21:00:00", side: "left" },
+    { id: 30, label: "Semifinal 2", homeSource: "G27", awaySource: "G28", kickoff: "2026-07-15T21:00:00", side: "right" },
+
+    // Tercer lloc
+    { id: 31, label: "Tercer lloc", homeSource: "P29", awaySource: "P30", kickoff: "2026-07-18T21:00:00", side: "center" },
+
+    // Final
+    { id: 32, label: "Final", homeSource: "G29", awaySource: "G30", kickoff: "2026-07-19T21:00:00", side: "center" },
+];
 
 function getBestThirdPlacedTeams(
     groupStandings: Record<string, TeamStanding[]>
@@ -150,4 +296,71 @@ function resolveSingleSlot(
     }
 
     return slot;
+}
+
+export function generateBracketTree(
+    roundOf32Matches: ReturnType<typeof resolveRoundOf32>,
+    predictions: Record<number, { qualified_team: string | null }> = {}
+) {
+    const winners: Record<string, string> = {};
+
+    const resolvedRoundOf32: BracketResolvedMatch[] = roundOf32Matches.map(
+        (match) => {
+            const winner = predictions[match.id]?.qualified_team ?? null;
+
+            const loser =
+                winner === match.homeTeam
+                    ? match.awayTeam
+                    : winner === match.awayTeam
+                        ? match.homeTeam
+                        : null;
+
+            if (winner) winners[`G${match.id}`] = winner;
+            if (loser) winners[`P${match.id}`] = loser;
+
+            return {
+                id: match.id,
+                label: `Setzens ${match.id}`,
+                homeTeam: match.homeTeam,
+                awayTeam: match.awayTeam,
+                winner,
+                kickoff: match.kickoff,
+                side: match.side,
+            };
+        }
+    );
+
+    const resolvedLaterRounds: BracketResolvedMatch[] = knockoutRounds.map(
+        (match) => {
+            const homeTeam = winners[match.homeSource] ?? match.homeSource;
+            const awayTeam = winners[match.awaySource] ?? match.awaySource;
+
+            const winner = predictions[match.id]?.qualified_team ?? null;
+
+            const loser =
+                winner === homeTeam
+                    ? awayTeam
+                    : winner === awayTeam
+                        ? homeTeam
+                        : null;
+
+            if (winner) winners[`G${match.id}`] = winner;
+            if (loser) winners[`P${match.id}`] = loser;
+
+            return {
+                id: match.id,
+                label: match.label,
+                homeTeam,
+                awayTeam,
+                winner,
+                kickoff: match.kickoff,
+                side: match.side,
+            };
+        }
+    );
+
+    return {
+        matches: [...resolvedRoundOf32, ...resolvedLaterRounds],
+        winners,
+    };
 }

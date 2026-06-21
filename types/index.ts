@@ -44,6 +44,13 @@ export type AwardResult = {
     player_name: string;
 };
 
+export type KnockoutPrediction = {
+    match_id: number;
+    predicted_home: number | null;
+    predicted_away: number | null;  
+    qualified_team: string | null;
+};
+
 export type Tab =
     | "mine"
     | "awards"

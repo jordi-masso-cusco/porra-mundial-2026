@@ -553,3 +553,14 @@ input:disabled {
     grid-template-columns: 1fr;
   }
 }
+
+.section-title {
+  margin: 32px 0 16px;
+  padding: 10px 14px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #1d4ed8, #0f172a);
+  color: white;
+  font-size: 1.4rem;
+  font-weight: 700;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+}

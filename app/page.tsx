@@ -19,10 +19,14 @@ import type {
   PublicPrediction,
   Tab,
   User,
+  KnockoutPrediction,
 } from "@/types";
 import { PublicAwards } from "@/components/PublicAwards";
 import { AdminAwards } from "@/components/AdminAwards";
 import { KnockoutBracket } from "@/components/KnockoutBracket";
+import { KnockoutPredictions } from "@/components/KnockoutPredictions";
+import { calculateRealGroupStandings } from "@/lib/groupStandings";
+import { resolveRoundOf32 } from "@/lib/knockout";
 import { supabase } from "@/lib/supabase";
 
 export default function Home() {
@@ -41,6 +45,9 @@ export default function Home() {
   const areGroupStagePredictionsClosed = new Date() >= groupStagePredictionDeadline;
   const [awardPredictions, setAwardPredictions] = useState<
     Record<string, AwardPrediction>
+  >({});
+  const [knockoutPredictions, setKnockoutPredictions] = useState<
+    Record<number, KnockoutPrediction>
   >({});
   const [publicAwardPredictions, setPublicAwardPredictions] = useState<
     PublicAwardPrediction[]
@@ -166,6 +173,25 @@ export default function Home() {
     }
 
     setPredictions(predictionsByMatch);
+
+    const { data: knockoutPredictionsData, error: knockoutPredictionsError } =
+      await supabase
+        .from("knockout_predictions")
+        .select("match_id, predicted_home, predicted_away, qualified_team")
+        .eq("user_id", userId);
+
+    if (knockoutPredictionsError) {
+      setError("No s'han pogut carregar els pronòstics d'eliminatòries.");
+      return;
+    }
+
+    const knockoutPredictionsByMatch: Record<number, KnockoutPrediction> = {};
+
+    for (const prediction of knockoutPredictionsData || []) {
+      knockoutPredictionsByMatch[prediction.match_id] = prediction;
+    }
+
+    setKnockoutPredictions(knockoutPredictionsByMatch);
   }
 
   async function loadPublicPredictions() {
@@ -547,6 +573,123 @@ export default function Home() {
     loadPublicPredictions();
   }
 
+  function updateKnockoutPrediction(
+    matchId: number,
+    field: "predicted_home" | "predicted_away" | "qualified_team",
+    value: string
+  ) {
+    setKnockoutPredictions((current) => {
+      const currentPrediction = current[matchId];
+
+      const nextPrediction: KnockoutPrediction = {
+        match_id: matchId,
+        predicted_home: currentPrediction?.predicted_home ?? null,
+        predicted_away: currentPrediction?.predicted_away ?? null,
+        qualified_team: currentPrediction?.qualified_team ?? null,
+      };
+
+      if (field === "qualified_team") {
+        nextPrediction.qualified_team = value;
+      } else {
+        nextPrediction[field] = value === "" ? null : Number(value);
+      }
+
+      const knockoutMatch = resolveRoundOf32(
+        calculateRealGroupStandings(matches)
+      ).find((match) => match.id === matchId);
+
+      if (
+        knockoutMatch &&
+        nextPrediction.predicted_home !== null &&
+        nextPrediction.predicted_away !== null
+      ) {
+        if (nextPrediction.predicted_home > nextPrediction.predicted_away) {
+          nextPrediction.qualified_team = knockoutMatch.homeTeam;
+        } else if (nextPrediction.predicted_home < nextPrediction.predicted_away) {
+          nextPrediction.qualified_team = knockoutMatch.awayTeam;
+        } else if (
+          nextPrediction.qualified_team !== knockoutMatch.homeTeam &&
+          nextPrediction.qualified_team !== knockoutMatch.awayTeam
+        ) {
+          nextPrediction.qualified_team = null;
+        }
+      }
+
+      return {
+        ...current,
+        [matchId]: nextPrediction,
+      };
+    });
+  }
+
+  async function saveKnockoutPrediction(matchId: number) {
+    if (!currentUser) return;
+
+    const prediction = knockoutPredictions[matchId];
+
+    if (
+      !prediction ||
+      prediction.predicted_home === null ||
+      prediction.predicted_away === null ||
+      !prediction.qualified_team
+    ) {
+      setError("Has d'indicar resultat i equip classificat.");
+      return;
+    }
+
+    const { error } = await supabase.from("knockout_predictions").upsert({
+      user_id: currentUser.id,
+      match_id: matchId,
+      predicted_home: prediction.predicted_home,
+      predicted_away: prediction.predicted_away,
+      qualified_team: prediction.qualified_team,
+    });
+
+    if (error) {
+      console.error(error);
+      setError(`No s'ha pogut desar el pronòstic d'eliminatòries: ${error.message}`);
+      return;
+    }
+
+    setSavedMessage("Pronòstic d'eliminatòries desat correctament.");
+  }
+
+  async function saveAllKnockoutPredictions() {
+    if (!currentUser) return;
+
+    const completedPredictions = Object.values(knockoutPredictions).filter(
+      (prediction) =>
+        prediction.predicted_home !== null &&
+        prediction.predicted_away !== null &&
+        prediction.qualified_team
+    );
+
+    if (completedPredictions.length === 0) {
+      setError("No hi ha cap pronòstic d'eliminatòries complet per desar.");
+      return;
+    }
+
+    const rowsToSave = completedPredictions.map((prediction) => ({
+      user_id: currentUser.id,
+      match_id: prediction.match_id,
+      predicted_home: prediction.predicted_home,
+      predicted_away: prediction.predicted_away,
+      qualified_team: prediction.qualified_team,
+    }));
+
+    const { error } = await supabase
+      .from("knockout_predictions")
+      .upsert(rowsToSave);
+
+    if (error) {
+      console.error(error);
+      setError(`No s'han pogut desar els pronòstics d'eliminatòries: ${error.message}`);
+      return;
+    }
+
+    setSavedMessage("Pronòstics d'eliminatòries desats correctament.");
+  }
+
   const filteredPublicPredictions =
     selectedGroup === "ALL" || selectedGroup === null
       ? publicPredictions
@@ -665,7 +808,16 @@ export default function Home() {
         />
       )}
 
-      {tab === "knockout" && <KnockoutBracket matches={matches} />}
+      {tab === "knockout" && (
+        <>
+          <KnockoutPredictions
+            matches={matches}
+            predictions={knockoutPredictions}
+            onPredictionChange={updateKnockoutPrediction}
+            onSaveAllPredictions={saveAllKnockoutPredictions}
+          />
+        </>
+      )}
 
       {tab === "admin" && currentUser.is_admin && (
         <>
