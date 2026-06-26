@@ -149,7 +149,7 @@ function calculateRows(
             result,
             points: total,
             reason,
-            category: "groupResults",
+            category,
         });
     }
 
@@ -411,7 +411,7 @@ function calculateRows(
                     result: "Classificació real",
                     points: groupPoints,
                     reason: "Posicions exactes de grup",
-                    category: "groupResults",
+                    category: "groupStandings",
                 });
             }
         }
@@ -432,7 +432,7 @@ function calculateRows(
         if (predictedPlayer === realPlayer) {
             const points = awardPoints[awardPrediction.award_key] ?? 0;
 
-            row.points += points;
+            row.breakdown.awards += points;
             row.details.push({
                 matchName:
                     awardLabels[awardPrediction.award_key] ?? awardPrediction.award_key,
@@ -440,7 +440,7 @@ function calculateRows(
                 result: result.player_name,
                 points,
                 reason: "Premi individual correcte",
-                category: "groupResults",
+                category: "awards",
             });
         }
     }
@@ -595,6 +595,27 @@ export function Standings({
                                                 (detail) => detail.category === categoryKey
                                             );
 
+                                            const groupResultDetails =
+                                                categoryKey === "groupResults"
+                                                    ? Object.entries(
+                                                        categoryDetails.reduce<Record<string, typeof categoryDetails>>(
+                                                            (groups, detail) => {
+                                                                const groupName =
+                                                                    matches.find(
+                                                                        (match) =>
+                                                                            `${match.home_team} - ${match.away_team}` === detail.matchName
+                                                                    )?.group_name ?? "Altres";
+
+                                                                if (!groups[groupName]) groups[groupName] = [];
+                                                                groups[groupName].push(detail);
+
+                                                                return groups;
+                                                            },
+                                                            {}
+                                                        )
+                                                    ).sort(([groupA], [groupB]) => groupA.localeCompare(groupB))
+                                                    : [];
+
                                             return (
                                                 <details key={category} className="standings-breakdown-category">
                                                     <summary className="standings-breakdown-row">
@@ -605,15 +626,36 @@ export function Standings({
                                                     <div className="standings-category-details">
                                                         {categoryDetails.length === 0 ? (
                                                             <p className="muted">Sense punts en aquesta categoria.</p>
+                                                        ) : categoryKey === "groupResults" ? (
+                                                            groupResultDetails.map(([groupName, groupDetails]) => (
+                                                                <details key={groupName} className="standings-breakdown-category">
+                                                                    <summary className="standings-breakdown-row">
+                                                                        <span>Grup {groupName}</span>
+                                                                        <strong>
+                                                                            {groupDetails.reduce((sum, detail) => sum + detail.points, 0)}
+                                                                        </strong>
+                                                                    </summary>
+
+                                                                    <div className="standings-category-details">
+                                                                        {groupDetails.map((detail, detailIndex) => (
+                                                                            <div key={detailIndex} className="standings-detail-row">
+                                                                                <strong>{detail.matchName}</strong>
+                                                                                <span className="muted">Pronòstic: {detail.prediction}</span>
+                                                                                <span className="muted">Resultat: {detail.result}</span>
+                                                                                <span>
+                                                                                    <strong>{detail.points}</strong> · {detail.reason}
+                                                                                </span>
+                                                                            </div>
+                                                                        ))}
+                                                                    </div>
+                                                                </details>
+                                                            ))
                                                         ) : (
                                                             categoryDetails.map((detail, detailIndex) => (
                                                                 <div key={detailIndex} className="standings-detail-row">
                                                                     <strong>{detail.matchName}</strong>
-
                                                                     <span className="muted">Pronòstic: {detail.prediction}</span>
-
                                                                     <span className="muted">Resultat: {detail.result}</span>
-
                                                                     <span>
                                                                         <strong>{detail.points}</strong> · {detail.reason}
                                                                     </span>

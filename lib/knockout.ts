@@ -227,75 +227,83 @@ export function resolveKnockoutSlot(
     return slot;
 }
 
-export function resolveRoundOf32(
-    groupStandings: Record<string, TeamStanding[]>
-) {
-    const usedTeams = new Set<string>();
-
-    const bestThirds = getBestThirdPlacedTeams(groupStandings);
-
-    return roundOf32Slots.map((match) => {
-        const homeTeam = resolveSingleSlot(
-            match.homeSlot,
-            groupStandings,
-            bestThirds,
-            usedTeams
-        );
-
-        if (homeTeam) {
-            usedTeams.add(homeTeam);
-        }
-
-        const awayTeam = resolveSingleSlot(
-            match.awaySlot,
-            groupStandings,
-            bestThirds,
-            usedTeams
-        );
-
-        if (awayTeam) {
-            usedTeams.add(awayTeam);
-        }
-
-        return {
-            ...match,
-            homeTeam,
-            awayTeam,
-        };
-    });
+function getThirdSlotKey(slot: string) {
+  return slot.startsWith("3") ? slot : null;
 }
 
-function resolveSingleSlot(
-    slot: string,
-    groupStandings: Record<string, TeamStanding[]>,
-    bestThirds: ReturnType<typeof getBestThirdPlacedTeams>,
-    usedTeams: Set<string>
+function assignThirdPlacedTeams(
+  bestThirds: ReturnType<typeof getBestThirdPlacedTeams>
 ) {
-    if (slot.length === 2) {
-        const position = Number(slot[0]);
-        const groupName = slot[1];
+  const thirdSlots = roundOf32Slots
+    .map((match) => match.awaySlot)
+    .filter((slot) => slot.startsWith("3"));
 
-        const team = groupStandings[groupName]?.[position - 1]?.team;
+  const assignment: Record<string, string> = {};
+  const usedGroups = new Set<string>();
 
-        if (!team || usedTeams.has(team)) return slot;
+  const orderedSlots = [...thirdSlots].sort(
+    (a, b) => a.length - b.length
+  );
 
-        return team;
+  function backtrack(index: number): boolean {
+    if (index === orderedSlots.length) return true;
+
+    const slot = orderedSlots[index];
+    const allowedGroups = slot.slice(1).split("");
+
+    for (const third of bestThirds) {
+      if (!third) continue;
+      if (usedGroups.has(third.groupName)) continue;
+      if (!allowedGroups.includes(third.groupName)) continue;
+
+      assignment[slot] = third.team;
+      usedGroups.add(third.groupName);
+
+      if (backtrack(index + 1)) return true;
+
+      delete assignment[slot];
+      usedGroups.delete(third.groupName);
     }
 
-    if (slot.startsWith("3")) {
-        const allowedGroups = slot.slice(1).split("");
+    return false;
+  }
 
-        const matchingThird = bestThirds.find(
-            (third) =>
-                third &&
-                allowedGroups.includes(third.groupName) &&
-                !usedTeams.has(third.team)
-        );
+  backtrack(0);
 
-        return matchingThird?.team ?? slot;
-    }
+  return assignment;
+}
 
-    return slot;
+function resolveFixedSlot(
+  slot: string,
+  groupStandings: Record<string, TeamStanding[]>
+) {
+  const position = Number(slot[0]);
+  const groupName = slot[1];
+
+  return groupStandings[groupName]?.[position - 1]?.team ?? slot;
+}
+
+export function resolveRoundOf32(
+  groupStandings: Record<string, TeamStanding[]>
+) {
+  const bestThirds = getBestThirdPlacedTeams(groupStandings);
+  const thirdAssignments = assignThirdPlacedTeams(bestThirds);
+
+  return roundOf32Slots.map((match) => {
+    const homeTeam = match.homeSlot.startsWith("3")
+      ? thirdAssignments[match.homeSlot] ?? match.homeSlot
+      : resolveFixedSlot(match.homeSlot, groupStandings);
+
+    const awayTeam = match.awaySlot.startsWith("3")
+      ? thirdAssignments[match.awaySlot] ?? match.awaySlot
+      : resolveFixedSlot(match.awaySlot, groupStandings);
+
+    return {
+      ...match,
+      homeTeam,
+      awayTeam,
+    };
+  });
 }
 
 export function generateBracketTree(
