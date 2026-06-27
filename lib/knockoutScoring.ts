@@ -42,7 +42,7 @@ export function calculateRoundOf32QualificationPoints(
         if (!realQualifiedTeams.has(team)) continue;
 
         details.push({
-            points: 20,
+            points: 10,
             reason: `${team} classificat a setzens`,
         });
     }
