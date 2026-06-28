@@ -1,4 +1,4 @@
-import type { KnockoutPrediction, Match } from "@/types";
+import type { KnockoutPrediction, KnockoutResult, Match } from "@/types";
 import { calculateRealGroupStandings } from "@/lib/groupStandings";
 import { generateBracketTree, resolveRoundOf32 } from "@/lib/knockout";
 import { flagUrl } from "@/lib/flags";
@@ -6,6 +6,7 @@ import { flagUrl } from "@/lib/flags";
 type KnockoutPredictionsProps = {
     matches: Match[];
     predictions: Record<number, KnockoutPrediction>;
+    knockoutResults: Record<number, KnockoutResult>;
     onPredictionChange: (
         matchId: number,
         field: "predicted_home" | "predicted_away" | "qualified_team",
@@ -62,6 +63,9 @@ function KnockoutPredictionCard({
         prediction?.predicted_away !== undefined &&
         prediction.predicted_home === prediction.predicted_away;
 
+    const matchLocked = new Date() >= new Date(match.kickoff);
+    const canEditMatch = predictionsOpen && !matchLocked;
+
     return (
         <div className="card">
             <div className="match-footer" style={{ marginTop: 0 }}>
@@ -80,7 +84,7 @@ function KnockoutPredictionCard({
                         className="score-input"
                         type="number"
                         min="0"
-                        disabled={!teamsAreResolved || !predictionsOpen}
+                        disabled={!teamsAreResolved || !canEditMatch}
                         value={homePrediction}
                         onChange={(e) =>
                             onPredictionChange(match.id, "predicted_home", e.target.value)
@@ -93,7 +97,7 @@ function KnockoutPredictionCard({
                         className="score-input"
                         type="number"
                         min="0"
-                        disabled={!teamsAreResolved || !predictionsOpen}
+                        disabled={!teamsAreResolved || !canEditMatch}
                         value={awayPrediction}
                         onChange={(e) =>
                             onPredictionChange(match.id, "predicted_away", e.target.value)
@@ -115,7 +119,7 @@ function KnockoutPredictionCard({
 
                     <select
                         value={qualifiedTeam}
-                        disabled={!teamsAreResolved || !predictionsOpen}
+                        disabled={!teamsAreResolved || !canEditMatch}
                         onChange={(e) =>
                             onPredictionChange(match.id, "qualified_team", e.target.value)
                         }
@@ -149,13 +153,31 @@ function KnockoutPredictionCard({
 export function KnockoutPredictions({
     matches,
     predictions,
+    knockoutResults,
     predictionsOpen,
     onPredictionChange,
     onSaveAllPredictions,
 }: KnockoutPredictionsProps) {
     const groupStandings = calculateRealGroupStandings(matches);
     const roundOf32Matches = resolveRoundOf32(groupStandings);
-    const bracket = generateBracketTree(roundOf32Matches, predictions);
+    const effectivePredictions: Record<number, KnockoutPrediction> = {
+        ...Object.fromEntries(
+            Object.values(knockoutResults)
+                .filter((result) => result.qualified_team)
+                .map((result) => [
+                    result.match_id,
+                    {
+                        match_id: result.match_id,
+                        predicted_home: null,
+                        predicted_away: null,
+                        qualified_team: result.qualified_team,
+                    },
+                ])
+        ),
+        ...predictions,
+    };
+
+    const bracket = generateBracketTree(roundOf32Matches, effectivePredictions);
 
     const renderRound = (title: string, fromId: number, toId: number) => {
         const roundMatches = bracket.matches.filter(

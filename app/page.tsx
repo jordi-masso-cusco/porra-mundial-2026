@@ -69,13 +69,10 @@ export default function Home() {
         new Date(b.kickoff).getTime() - new Date(a.kickoff).getTime()
     )[0];
 
-  const firstKnockoutMatchKickoff = new Date("2026-06-28T21:00:00");
+  const knockoutPredictionsDeadline = new Date("2026-06-29T19:00:00");
 
-  const areKnockoutPredictionsOpen =
-    !!lastGroupStageMatch &&
-    new Date() >=
-    new Date(new Date(lastGroupStageMatch.kickoff).getTime() + 2 * 60 * 60 * 1000) &&
-    new Date() < firstKnockoutMatchKickoff;
+  const areKnockoutPredictionsOpen = new Date() < knockoutPredictionsDeadline;
+
   const [awardPredictions, setAwardPredictions] = useState<
     Record<string, AwardPrediction>
   >({});
@@ -682,9 +679,11 @@ export default function Home() {
         nextPrediction[field] = value === "" ? null : Number(value);
       }
 
-      const knockoutMatch = resolveRoundOf32(
-        calculateRealGroupStandings(matches)
-      ).find((match) => match.id === matchId);
+      const groupStandings = calculateRealGroupStandings(matches);
+      const roundOf32Matches = resolveRoundOf32(groupStandings);
+      const bracket = generateBracketTree(roundOf32Matches, current);
+
+      const knockoutMatch = bracket.matches.find((match) => match.id === matchId);
 
       if (
         knockoutMatch &&
@@ -1014,6 +1013,7 @@ export default function Home() {
             <KnockoutPredictions
               matches={matches}
               predictions={knockoutPredictions}
+              knockoutResults={knockoutResults}
               predictionsOpen={areKnockoutPredictionsOpen}
               onPredictionChange={updateKnockoutPrediction}
               onSaveAllPredictions={saveAllKnockoutPredictions}
