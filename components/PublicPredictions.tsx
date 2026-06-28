@@ -181,7 +181,7 @@ export function PublicPredictions({
 
     return (
         <>
-            <h2 className="section-title">Porres dels altres</h2>
+            <h2 className="section-title">Resultats dels partits pronosticats</h2>
 
             {publicPredictions.length === 0 && <p>Encara no hi ha pronòstics.</p>}
 

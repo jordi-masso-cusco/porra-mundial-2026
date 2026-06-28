@@ -31,6 +31,7 @@ import { calculateRealGroupStandings } from "@/lib/groupStandings";
 import { generateBracketTree, resolveRoundOf32 } from "@/lib/knockout";
 import { PublicKnockoutPredictions } from "@/components/PublicKnockoutPredictions";
 import { AdminKnockoutResults } from "@/components/AdminKnockoutResults";
+import { PublicKnockoutMatches } from "@/components/PublicKnockoutMatches";
 import { supabase } from "@/lib/supabase";
 
 export default function Home() {
@@ -49,7 +50,7 @@ export default function Home() {
     "groups" | "awards" | "knockout"
   >("groups");
   const [publicSection, setPublicSection] = useState<
-    "matches" | "groups" | "awards" | "knockout"
+    "matches" | "groups" | "awards" | "knockoutMatches" | "knockout"
   >("matches");
   const [publicKnockoutPredictions, setPublicKnockoutPredictions] = useState<
     PublicKnockoutPrediction[]
@@ -1073,6 +1074,13 @@ export default function Home() {
             </button>
 
             <button
+              className={publicSection === "knockoutMatches" ? "tab active" : "tab"}
+              onClick={() => setPublicSection("knockoutMatches")}
+            >
+              Partits eliminatòries
+            </button>
+
+            <button
               className={publicSection === "knockout" ? "tab active" : "tab"}
               onClick={() => setPublicSection("knockout")}
             >
@@ -1095,6 +1103,14 @@ export default function Home() {
             <PublicAwards
               publicAwardPredictions={filteredPublicAwardPredictions}
               awardResults={awardResults}
+            />
+          )}
+
+          {publicSection === "knockoutMatches" && (
+            <PublicKnockoutMatches
+              matches={matches}
+              publicKnockoutPredictions={filteredPublicKnockoutPredictions}
+              knockoutResults={knockoutResults}
             />
           )}
 

@@ -519,3 +519,141 @@ export function calculateKnockoutMatchPointsForRange({
     return details;
 }
 
+function getRoundScoringConfig(matchId: number) {
+  if (matchId >= 1 && matchId <= 16) {
+    return { exactPoints: 10, signPoints: 5 };
+  }
+
+  if (matchId >= 17 && matchId <= 24) {
+    return { exactPoints: 10, signPoints: 5 };
+  }
+
+  if (matchId >= 25 && matchId <= 28) {
+    return { exactPoints: 20, signPoints: 10 };
+  }
+
+  if (matchId >= 29 && matchId <= 30) {
+    return { exactPoints: 30, signPoints: 15 };
+  }
+
+  if (matchId === 31) {
+    return { exactPoints: 30, signPoints: 15 };
+  }
+
+  if (matchId === 32) {
+    return { exactPoints: 60, signPoints: 40 };
+  }
+
+  return null;
+}
+
+function getQualificationPointsForMatch(matchId: number) {
+  if (matchId >= 1 && matchId <= 16) return 10;
+  if (matchId >= 17 && matchId <= 24) return 20;
+  if (matchId >= 25 && matchId <= 28) return 30;
+  if (matchId >= 29 && matchId <= 30) return 40;
+  if (matchId === 31) return 30;
+  if (matchId === 32) return 100;
+
+  return 0;
+}
+
+export function calculateSingleKnockoutMatchPoints({
+  matches,
+  publicKnockoutPredictions,
+  knockoutResults,
+  userName,
+  matchId,
+}: {
+  matches: Match[];
+  publicKnockoutPredictions: PublicKnockoutPrediction[];
+  knockoutResults: Record<number, KnockoutResult>;
+  userName: string;
+  matchId: number;
+}) {
+  const details: KnockoutScoreDetail[] = [];
+
+  const roundConfig = getRoundScoringConfig(matchId);
+  if (!roundConfig) return details;
+
+  const { realBracket, predictedBracket } = buildBracketsForUser(
+    matches,
+    publicKnockoutPredictions,
+    knockoutResults,
+    userName
+  );
+
+  const realMatch = realBracket.matches.find((match) => match.id === matchId);
+  const predictedMatch = predictedBracket.matches.find(
+    (match) => match.id === matchId
+  );
+
+  const prediction = publicKnockoutPredictions.find(
+    (item) => item.users?.name === userName && item.match_id === matchId
+  );
+
+  const result = knockoutResults[matchId];
+
+  if (!realMatch || !predictedMatch || !prediction || !result) {
+    return details;
+  }
+
+  if (prediction.qualified_team && result.qualified_team) {
+    if (prediction.qualified_team === result.qualified_team) {
+      const qualificationPoints = getQualificationPointsForMatch(matchId);
+
+      if (qualificationPoints > 0) {
+        details.push({
+          points: qualificationPoints,
+          reason: "Classificació",
+        });
+      }
+    }
+  }
+
+  if (
+    result.official_home === null ||
+    result.official_away === null ||
+    prediction.predicted_home === null ||
+    prediction.predicted_away === null
+  ) {
+    return details;
+  }
+
+  if (
+    !sameTeams(
+      predictedMatch.homeTeam,
+      predictedMatch.awayTeam,
+      realMatch.homeTeam,
+      realMatch.awayTeam
+    )
+  ) {
+    return details;
+  }
+
+  const exact =
+    prediction.predicted_home === result.official_home &&
+    prediction.predicted_away === result.official_away;
+
+  if (exact) {
+    details.push({
+      points: roundConfig.exactPoints,
+      reason: "Resultat exacte",
+    });
+
+    return details;
+  }
+
+  const signCorrect =
+    getSign(prediction.predicted_home, prediction.predicted_away) ===
+    getSign(result.official_home, result.official_away);
+
+  if (signCorrect) {
+    details.push({
+      points: roundConfig.signPoints,
+      reason: "Signe 1X2 correcte",
+    });
+  }
+
+  return details;
+}
