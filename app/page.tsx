@@ -85,6 +85,8 @@ export default function Home() {
   const [awardResults, setAwardResults] = useState<Record<string, AwardResult>>({});
   const [selectedGroup, setSelectedGroup] = useState<string | null>(null);
 
+  const [showSpainWarning, setShowSpainWarning] = useState(false);
+
   useEffect(() => {
     const savedUser = localStorage.getItem("porra_user");
     if (savedUser) setCurrentUser(JSON.parse(savedUser));
@@ -702,6 +704,10 @@ export default function Home() {
         }
       }
 
+      if (matchId === 32 && nextPrediction.qualified_team === "Spain") {
+        setShowSpainWarning(true);
+      }
+
       return {
         ...current,
         [matchId]: nextPrediction,
@@ -964,6 +970,26 @@ export default function Home() {
 
       {error && <p className="error">{error}</p>}
       {savedMessage && <p className="success">{savedMessage}</p>}
+
+      {showSpainWarning && (
+        <div className="modal-backdrop">
+          <div className="modal-card">
+            <h2>🚫 Pronòstic no recomanat</h2>
+
+            <p>
+              Aquesta porra no admet posar Espanya com a possible guanyadora.
+            </p>
+
+            <p>
+              Puta Espanya sempre.
+            </p>
+
+            <button onClick={() => setShowSpainWarning(false)}>
+              Ho entenc perfectament
+            </button>
+          </div>
+        </div>
+      )}
 
       {tab === "mine" && (
         <>
