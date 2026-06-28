@@ -21,9 +21,9 @@ export type KnockoutMatchSlot = {
 const manualThirdPlaceAssignments: Record<string, string> = {
     "1E": "3D",
     "1I": "3F",
-    "1G": "3A",
+    "1G": "3I",
     "1A": "3E",
-    "1L": "3I",
+    "1L": "3K",
     "1B": "3J",
     "1K": "3L",
     "1D": "3B",
