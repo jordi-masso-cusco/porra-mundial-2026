@@ -548,7 +548,7 @@ function getRoundScoringConfig(matchId: number) {
 }
 
 function getQualificationPointsForMatch(matchId: number) {
-  if (matchId >= 1 && matchId <= 16) return 10;
+  if (matchId >= 1 && matchId <= 16) return 20;
   if (matchId >= 17 && matchId <= 24) return 20;
   if (matchId >= 25 && matchId <= 28) return 30;
   if (matchId >= 29 && matchId <= 30) return 40;
