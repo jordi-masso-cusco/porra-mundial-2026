@@ -70,7 +70,7 @@ export default function Home() {
         new Date(b.kickoff).getTime() - new Date(a.kickoff).getTime()
     )[0];
 
-  const knockoutPredictionsDeadline = new Date("2026-06-29T19:00:00");
+  const knockoutPredictionsDeadline = new Date("2026-06-29T22:00:00");
 
   const areKnockoutPredictionsOpen = new Date() < knockoutPredictionsDeadline;
 
