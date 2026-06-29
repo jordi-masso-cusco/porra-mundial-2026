@@ -684,7 +684,29 @@ export default function Home() {
 
       const groupStandings = calculateRealGroupStandings(matches);
       const roundOf32Matches = resolveRoundOf32(groupStandings);
-      const bracket = generateBracketTree(roundOf32Matches, current);
+
+      const officialQualifiedTeams: Record<number, KnockoutPrediction> =
+        Object.fromEntries(
+          Object.values(knockoutResults)
+            .filter((result) => result.qualified_team)
+            .map((result) => [
+              result.match_id,
+              {
+                match_id: result.match_id,
+                predicted_home: null,
+                predicted_away: null,
+                qualified_team: result.qualified_team,
+              },
+            ])
+        );
+
+      const effectivePredictions = {
+        ...officialQualifiedTeams,
+        ...current,
+        [matchId]: nextPrediction,
+      };
+
+      const bracket = generateBracketTree(roundOf32Matches, effectivePredictions);
 
       const knockoutMatch = bracket.matches.find((match) => match.id === matchId);
 
