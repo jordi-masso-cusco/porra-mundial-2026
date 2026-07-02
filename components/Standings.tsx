@@ -100,6 +100,12 @@ function calculateRows(
 ) {
     const standings: Record<string, StandingRow> = {};
 
+    function userHasGroupPredictions(userName: string) {
+        return publicPredictions.some(
+            (prediction) => prediction.users?.name === userName
+        );
+    }
+
     function getOrCreateStanding(userName: string) {
         if (!standings[userName]) {
             standings[userName] = {
@@ -116,6 +122,21 @@ function calculateRows(
         }
 
         return standings[userName];
+    }
+
+    for (const prediction of publicPredictions) {
+        const userName = prediction.users?.name;
+        if (userName) getOrCreateStanding(userName);
+    }
+
+    for (const prediction of publicKnockoutPredictions) {
+        const userName = prediction.users?.name;
+        if (userName) getOrCreateStanding(userName);
+    }
+
+    for (const prediction of publicAwardPredictions) {
+        const userName = prediction.users?.name;
+        if (userName) getOrCreateStanding(userName);
     }
 
     function addAggregatedPoints(
@@ -143,14 +164,16 @@ function calculateRows(
         row.points += total;
         row.breakdown[category] += total;
 
-        row.details.push({
-            matchName: title,
-            prediction,
-            result,
-            points: total,
-            reason,
-            category,
-        });
+        for (const detail of details) {
+            row.details.push({
+                matchName: title,
+                prediction,
+                result,
+                points: detail.points,
+                reason: detail.reason,
+                category,
+            });
+        }
     }
 
     for (const prediction of publicPredictions) {
@@ -206,18 +229,20 @@ function calculateRows(
     const realGroupStandings = calculateRealGroupStandings(matches);
 
     for (const row of Object.values(standings)) {
-        addAggregatedPoints(row, {
-            title: "Classificats a setzens",
-            prediction: "Equips classificats pronosticats",
-            result: "Equips classificats reals",
-            details: calculateRoundOf32QualificationPoints(
-                matches,
-                publicPredictions,
-                row.userName
-            ),
-            reason: "Equips classificats a setzens encertats",
-            category: "knockout",
-        });
+        if (userHasGroupPredictions(row.userName)) {
+            addAggregatedPoints(row, {
+                title: "Classificats a setzens",
+                prediction: "Equips classificats pronosticats",
+                result: "Equips classificats reals",
+                details: calculateRoundOf32QualificationPoints(
+                    matches,
+                    publicPredictions,
+                    row.userName
+                ),
+                reason: "Equips classificats a setzens encertats",
+                category: "knockout",
+            });
+        }
 
         addAggregatedPoints(row, {
             title: "Resultats setzens",
@@ -375,6 +400,8 @@ function calculateRows(
     }
 
     for (const row of Object.values(standings)) {
+        if (!userHasGroupPredictions(row.userName)) continue;
+
         const predictedGroupStandings = calculatePredictedGroupStandings(
             matches,
             publicPredictions,
@@ -405,6 +432,7 @@ function calculateRows(
             if (groupPoints > 0) {
                 row.points += groupPoints;
                 row.breakdown.groupStandings += groupPoints;
+
                 row.details.push({
                     matchName: `Grup ${groupName}`,
                     prediction: "Classificació pronosticada",
@@ -519,8 +547,7 @@ export function Standings({
 
 
             const totalPoints = members.reduce((sum, row) => sum + row.points, 0);
-            const averagePoints =
-                members.length > 0 ? totalPoints / members.length : 0;
+            const averagePoints = totalPoints / (members.length - 1);
 
             return {
                 groupName,
@@ -548,7 +575,7 @@ export function Standings({
                         </span>
 
                         <span className="muted">
-                            {team.totalPoints} punts · {team.membersCount} participants
+                            {team.totalPoints} punts · {team.membersCount - 1} participants
                         </span>
                     </div>
                 ))}
@@ -595,6 +622,23 @@ export function Standings({
                                                 (detail) => detail.category === categoryKey
                                             );
 
+                                            const knockoutDetailsByType =
+                                                categoryKey === "knockout"
+                                                    ? Object.entries(
+                                                        categoryDetails.reduce<Record<string, typeof categoryDetails>>(
+                                                            (groups, detail) => {
+                                                                if (!groups[detail.matchName]) {
+                                                                    groups[detail.matchName] = [];
+                                                                }
+
+                                                                groups[detail.matchName].push(detail);
+                                                                return groups;
+                                                            },
+                                                            {}
+                                                        )
+                                                    )
+                                                    : [];
+
                                             const groupResultDetails =
                                                 categoryKey === "groupResults"
                                                     ? Object.entries(
@@ -623,46 +667,51 @@ export function Standings({
                                                         <strong>{row.breakdown[categoryKey]}</strong>
                                                     </summary>
 
-                                                    <div className="standings-category-details">
-                                                        {categoryDetails.length === 0 ? (
-                                                            <p className="muted">Sense punts en aquesta categoria.</p>
-                                                        ) : categoryKey === "groupResults" ? (
-                                                            groupResultDetails.map(([groupName, groupDetails]) => (
-                                                                <details key={groupName} className="standings-breakdown-category">
-                                                                    <summary className="standings-breakdown-row">
-                                                                        <span>Grup {groupName}</span>
-                                                                        <strong>
-                                                                            {groupDetails.reduce((sum, detail) => sum + detail.points, 0)}
-                                                                        </strong>
-                                                                    </summary>
+                                                    {categoryDetails.length === 0 ? (
+                                                        <p className="muted">Sense punts en aquesta categoria.</p>
+                                                    ) : categoryKey === "knockout" ? (
+                                                        knockoutDetailsByType.map(([typeName, typeDetails]) => (
+                                                            <details key={typeName} className="standings-breakdown-category">
+                                                                <summary className="standings-breakdown-row">
+                                                                    <span>{typeName}</span>
+                                                                    <strong>
+                                                                        {typeDetails.reduce((sum, detail) => sum + detail.points, 0)}
+                                                                    </strong>
+                                                                </summary>
 
-                                                                    <div className="standings-category-details">
-                                                                        {groupDetails.map((detail, detailIndex) => (
-                                                                            <div key={detailIndex} className="standings-detail-row">
-                                                                                <strong>{detail.matchName}</strong>
-                                                                                <span className="muted">Pronòstic: {detail.prediction}</span>
-                                                                                <span className="muted">Resultat: {detail.result}</span>
-                                                                                <span>
-                                                                                    <strong>{detail.points}</strong> · {detail.reason}
-                                                                                </span>
-                                                                            </div>
-                                                                        ))}
-                                                                    </div>
-                                                                </details>
-                                                            ))
-                                                        ) : (
-                                                            categoryDetails.map((detail, detailIndex) => (
-                                                                <div key={detailIndex} className="standings-detail-row">
-                                                                    <strong>{detail.matchName}</strong>
-                                                                    <span className="muted">Pronòstic: {detail.prediction}</span>
-                                                                    <span className="muted">Resultat: {detail.result}</span>
-                                                                    <span>
-                                                                        <strong>{detail.points}</strong> · {detail.reason}
-                                                                    </span>
+                                                                <div className="standings-category-details">
+                                                                    {typeDetails.map((detail, detailIndex) => (
+                                                                        <div key={detailIndex} className="standings-detail-row">
+                                                                            <strong>{detail.matchName}</strong>
+
+                                                                            <span className="muted">
+                                                                                Pronòstic: {detail.prediction}
+                                                                            </span>
+
+                                                                            <span className="muted">
+                                                                                Resultat: {detail.result}
+                                                                            </span>
+
+                                                                            <span>
+                                                                                <strong>{detail.points}</strong> · {detail.reason}
+                                                                            </span>
+                                                                        </div>
+                                                                    ))}
                                                                 </div>
-                                                            ))
-                                                        )}
-                                                    </div>
+                                                            </details>
+                                                        ))
+                                                    ) : (
+                                                        categoryDetails.map((detail, detailIndex) => (
+                                                            <div key={detailIndex} className="standings-detail-row">
+                                                                <strong>{detail.matchName}</strong>
+                                                                <span className="muted">Pronòstic: {detail.prediction}</span>
+                                                                <span className="muted">Resultat: {detail.result}</span>
+                                                                <span>
+                                                                    <strong>{detail.points}</strong> · {detail.reason}
+                                                                </span>
+                                                            </div>
+                                                        ))
+                                                    )}
                                                 </details>
                                             );
                                         })}
